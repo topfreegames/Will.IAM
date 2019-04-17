@@ -95,7 +95,7 @@ func TestRolesUpdateHandlerRootSA(t *testing.T) {
 	beforeEachRolesHandlers(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
 	rootSA := helpers.CreateRootServiceAccount(t)
-	creatorSA, err := saUC.CreateKeyPairType("creator sa")
+	targetSA, err := saUC.CreateKeyPairType("creator sa")
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())
 		return
@@ -115,7 +115,7 @@ func TestRolesUpdateHandlerRootSA(t *testing.T) {
 	}
 	req, _ := http.NewRequest(
 		"PUT",
-		fmt.Sprintf("/roles/%s", creatorSA.BaseRoleID),
+		fmt.Sprintf("/roles/%s", targetSA.BaseRoleID),
 		bytes.NewBuffer(bts),
 	)
 	req.Header.Set("Authorization", fmt.Sprintf(
@@ -127,7 +127,7 @@ func TestRolesUpdateHandlerRootSA(t *testing.T) {
 	}
 
 	rsUC := helpers.GetRolesUseCase(t)
-	r, err := rsUC.Get(creatorSA.BaseRoleID)
+	r, err := rsUC.Get(targetSA.BaseRoleID)
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())
 		return
@@ -136,7 +136,7 @@ func TestRolesUpdateHandlerRootSA(t *testing.T) {
 		t.Errorf("Expected role name to be 'new role name'. Got %s", r["name"])
 	}
 
-	pSl, err := rsUC.GetPermissions(creatorSA.BaseRoleID)
+	pSl, err := rsUC.GetPermissions(targetSA.BaseRoleID)
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())
 		return
@@ -174,7 +174,7 @@ func TestRolesUpdateHandlerNonRootSA(t *testing.T) {
 		t.Errorf("Unexpected error %s", err.Error())
 		return
 	}
-	sa, err := saUC.CreateKeyPairType("some sa")
+	targetSA, err := saUC.CreateKeyPairType("some sa")
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())
 		return
@@ -194,7 +194,7 @@ func TestRolesUpdateHandlerNonRootSA(t *testing.T) {
 	}
 	req, _ := http.NewRequest(
 		"PUT",
-		fmt.Sprintf("/roles/%s", sa.BaseRoleID),
+		fmt.Sprintf("/roles/%s", targetSA.BaseRoleID),
 		bytes.NewBuffer(bts),
 	)
 	req.Header.Set("Authorization", fmt.Sprintf(
@@ -223,5 +223,40 @@ func TestRolesUpdateHandlerNonRootSA(t *testing.T) {
 	if len(pSl) > 0 {
 		t.Errorf("Expected to have 0 permissions. Got %d", len(pSl))
 		return
+	}
+}
+
+func TestRolesGetHandlerNonRootSA(t *testing.T) {
+	beforeEachRolesHandlers(t)
+	saUC := helpers.GetServiceAccountsUseCase(t)
+	nonRootSA, err := saUC.CreateKeyPairType("creator sa")
+	if err != nil {
+		t.Errorf("Unexpected error %s", err.Error())
+		return
+	}
+	targetSA, err := saUC.CreateKeyPairType("some sa")
+	if err != nil {
+		t.Errorf("Unexpected error %s", err.Error())
+		return
+	}
+	saUC.CreatePermission(nonRootSA.ID, &models.Permission{
+		Service:           "Will.IAM",
+		OwnershipLevel:    models.OwnershipLevels.Lender,
+		Action:            "EditRole",
+		ResourceHierarchy: models.ResourceHierarchy(targetSA.BaseRoleID),
+	})
+	app := helpers.GetApp(t)
+
+	req, _ := http.NewRequest(
+		"GET",
+		fmt.Sprintf("/roles/%s", targetSA.BaseRoleID),
+		nil,
+	)
+	req.Header.Set("Authorization", fmt.Sprintf(
+		"KeyPair %s:%s", nonRootSA.KeyID, nonRootSA.KeySecret,
+	))
+	rec := helpers.DoRequest(t, req, app.GetRouter())
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status 200. Got %d", rec.Code)
 	}
 }

@@ -9,6 +9,16 @@ import (
 	"github.com/topfreegames/extensions/middleware"
 )
 
+// ReplaceRequestVarsInPermission replaces special {...} in permission strings
+func ReplaceRequestVarsInPermission(
+	vars map[string]string, permission string,
+) string {
+	if id, ok := vars["id"]; ok {
+		permission = strings.Replace(permission, "{id}", id, -1)
+	}
+	return permission
+}
+
 func hasPermissionMiddlewareBuilder(
 	sasUC usecases.ServiceAccounts,
 ) func(string, http.Handler) http.Handler {
@@ -21,9 +31,7 @@ func hasPermissionMiddlewareBuilder(
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			if id, ok := mux.Vars(r)["id"]; ok {
-				permission = strings.Replace(permission, "{id}", id, -1)
-			}
+			permission = ReplaceRequestVarsInPermission(mux.Vars(r), permission)
 			has, err := sasUC.WithContext(r.Context()).
 				HasPermissionString(saID, permission)
 			if err != nil {
