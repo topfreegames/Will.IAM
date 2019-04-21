@@ -56,7 +56,7 @@ func (rs roles) ForServiceAccountID(serviceAccountID string) ([]models.Role, err
 	var roles []models.Role
 	_, err := rs.storage.PG.DB.Query(
 		&roles,
-		`SELECT r.id, r.name FROM roles r
+		`SELECT r.id, r.name, r.is_base_role FROM roles r
 		JOIN role_bindings rb ON rb.role_id = r.id
 		WHERE rb.service_account_id = ?`,
 		serviceAccountID,

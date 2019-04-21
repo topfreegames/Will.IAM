@@ -10,17 +10,18 @@ import (
 
 // ServiceAccounts repository
 type ServiceAccounts interface {
+	Clone() ServiceAccounts
+	Create(*models.ServiceAccount) error
+	DropBindings(string) error
+	ForEmail(string) (*models.ServiceAccount, error)
+	ForEmails([]string) ([]models.ServiceAccount, error)
+	ForKeyPair(string, string) (*models.ServiceAccount, error)
 	Get(string) (*models.ServiceAccount, error)
 	List(*ListOptions) ([]models.ServiceAccount, error)
 	ListCount() (int64, error)
 	Search(string, *ListOptions) ([]models.ServiceAccount, error)
 	SearchCount(string) (int64, error)
-	ForEmail(string) (*models.ServiceAccount, error)
-	ForEmails([]string) ([]models.ServiceAccount, error)
-	ForKeyPair(string, string) (*models.ServiceAccount, error)
-	Create(*models.ServiceAccount) error
 	Update(*models.ServiceAccount) error
-	Clone() ServiceAccounts
 	setStorage(*Storage)
 }
 
@@ -50,6 +51,20 @@ func (sas serviceAccounts) Get(id string) (*models.ServiceAccount, error) {
 		sa.AuthenticationType = models.AuthenticationTypes.KeyPair
 	}
 	return sa, nil
+}
+
+func (sas serviceAccounts) DropBindings(saID string) error {
+	sa := new(models.ServiceAccount)
+	if _, err := sas.storage.PG.DB.Query(
+		sa, "SELECT base_role_id FROM service_accounts WHERE id = ?", saID,
+	); err != nil {
+		return err
+	}
+	_, err := sas.storage.PG.DB.Exec(
+		`DELETE FROM role_bindings WHERE service_account_id = ? AND role_id != ?`,
+		saID, sa.BaseRoleID,
+	)
+	return err
 }
 
 func (sas serviceAccounts) List(

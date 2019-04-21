@@ -68,7 +68,7 @@ func serviceAccountsCreateHandler(
 	}
 }
 
-func serviceAccountsEditHandler(
+func serviceAccountsUpdateHandler(
 	sasUC usecases.ServiceAccounts,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func serviceAccountsEditHandler(
 					StatusCode()
 			}
 			l.WithError(err).Error(
-				"serviceAccountsEditHandler processServiceAccountWithNestedFromReq",
+				"serviceAccountsUpdateHandler processServiceAccountWithNestedFromReq",
 			)
 			w.WriteHeader(statusCode)
 			return
@@ -92,9 +92,10 @@ func serviceAccountsEditHandler(
 			return
 		}
 		sawn.ID = mux.Vars(r)["id"]
-		if err := sasUC.WithContext(r.Context()).EditWithNested(sawn); err != nil {
-			l.WithError(err).Error("sasUC.EditWithNested failed")
+		if err := sasUC.WithContext(r.Context()).UpdateWithNested(sawn); err != nil {
+			l.WithError(err).Error("sasUC.UpdateWithNested failed")
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 		w.WriteHeader(http.StatusOK)
 	}

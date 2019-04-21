@@ -1,3 +1,4 @@
+.env
 _build
 vendor
 docker_data

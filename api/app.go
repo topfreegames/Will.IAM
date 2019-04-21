@@ -216,7 +216,11 @@ func (a *App) GetRouter() *mux.Router {
 
 	r.Handle(
 		"/service_accounts/{id}",
-		authMiddle(http.HandlerFunc(serviceAccountsGetHandler(sasUC))),
+		authMiddle(hasPermissionMiddle(models.BuildWillIAMPermissionLender(
+			"EditServiceAccounts", "{id}",
+		), http.HandlerFunc(
+			serviceAccountsGetHandler(sasUC),
+		))),
 	).
 		Methods("GET").Name("serviceAccountsGetHandler")
 
@@ -235,10 +239,10 @@ func (a *App) GetRouter() *mux.Router {
 		authMiddle(hasPermissionMiddle(models.BuildWillIAMPermissionLender(
 			"EditServiceAccounts", "{id}",
 		), http.HandlerFunc(
-			serviceAccountsEditHandler(sasUC),
+			serviceAccountsUpdateHandler(sasUC),
 		))),
 	).
-		Methods("PUT").Name("serviceAccountsEditHandler")
+		Methods("PUT").Name("serviceAccountsUpdateHandler")
 
 	rsUC := usecases.NewRoles(repo)
 

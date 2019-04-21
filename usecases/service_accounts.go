@@ -17,7 +17,7 @@ type ServiceAccounts interface {
 	CreateKeyPairType(string) (*models.ServiceAccount, error)
 	CreateOAuth2Type(string, string) (*models.ServiceAccount, error)
 	CreateWithNested(*ServiceAccountWithNested) error
-	EditWithNested(*ServiceAccountWithNested) error
+	UpdateWithNested(*ServiceAccountWithNested) error
 	AuthenticateAccessToken(string) (*models.AccessTokenAuth, error)
 	AuthenticateKeyPair(string, string) (string, error)
 	HasPermissionString(string, string) (bool, error)
@@ -27,7 +27,7 @@ type ServiceAccounts interface {
 	GetPermissions(string) ([]models.Permission, error)
 	CreatePermission(string, *models.Permission) error
 	Get(string) (*models.ServiceAccount, error)
-	GetWithNested(string) (map[string]interface{}, error)
+	GetWithNested(string) (*ServiceAccountWithNested, error)
 	ForEmail(string) (*models.ServiceAccount, error)
 	List(*repositories.ListOptions) ([]models.ServiceAccount, int64, error)
 	Search(
@@ -62,14 +62,16 @@ func NewServiceAccounts(
 
 // ServiceAccountWithNested is the required data to update a role
 type ServiceAccountWithNested struct {
-	ID                 string              `json:"-"`
-	Name               string              `json:"name"`
-	Email              string              `json:"email"`
-	PermissionsStrings []string            `json:"permissions"`
-	PermissionsAliases map[string]string   `json:"permissionsAliases"`
-	Permissions        []models.Permission `json:"-"`
-	RolesIDs           []string            `json:"rolesIds"`
-	AuthenticationType models.AuthenticationType
+	ID                 string                    `json:"id"`
+	Name               string                    `json:"name"`
+	Email              string                    `json:"email"`
+	Picture            string                    `json:"picture"`
+	PermissionsStrings []string                  `json:"permissions"`
+	PermissionsAliases map[string]string         `json:"permissionsAliases"`
+	Permissions        []models.Permission       `json:"-"`
+	RolesIDs           []string                  `json:"rolesIds,omitempty"`
+	Roles              []models.Role             `json:"roles"`
+	AuthenticationType models.AuthenticationType `json:"authenticationType"`
 }
 
 // Validate ServiceAccountWithNested fields
@@ -104,6 +106,14 @@ func (sas serviceAccounts) CreateWithNested(
 				return err
 			}
 		}
+		for i := range sawn.RolesIDs {
+			if err := repo.Roles.Bind(&models.RoleBinding{
+				ServiceAccountID: sa.ID,
+				RoleID:           sawn.RolesIDs[i],
+			}); err != nil {
+				return err
+			}
+		}
 		for i := range sawn.Permissions {
 			sawn.Permissions[i].RoleID = sa.BaseRoleID
 			if err := repo.Permissions.Create(&sawn.Permissions[i]); err != nil {
@@ -114,7 +124,7 @@ func (sas serviceAccounts) CreateWithNested(
 	})
 }
 
-func (sas serviceAccounts) EditWithNested(
+func (sas serviceAccounts) UpdateWithNested(
 	sawn *ServiceAccountWithNested,
 ) error {
 	return sas.repo.WithPGTx(sas.ctx, func(repo *repositories.All) error {
@@ -126,6 +136,20 @@ func (sas serviceAccounts) EditWithNested(
 		sa.Email = sawn.Name
 		if err := repo.ServiceAccounts.Update(sa); err != nil {
 			return err
+		}
+		if err := repo.ServiceAccounts.DropBindings(sawn.ID); err != nil {
+			return err
+		}
+		for _, roleID := range sawn.RolesIDs {
+			if roleID == sa.BaseRoleID {
+				continue
+			}
+			if err := repo.Roles.Bind(&models.RoleBinding{
+				ServiceAccountID: sa.ID,
+				RoleID:           roleID,
+			}); err != nil {
+				return err
+			}
 		}
 		if err := repo.Roles.DropPermissions(sa.BaseRoleID); err != nil {
 			return err
@@ -143,7 +167,7 @@ func (sas serviceAccounts) EditWithNested(
 // GetWithNested returns a service account by id with permissions and roles
 func (sas serviceAccounts) GetWithNested(
 	serviceAccountID string,
-) (map[string]interface{}, error) {
+) (*ServiceAccountWithNested, error) {
 	sa, err := sas.repo.ServiceAccounts.Get(serviceAccountID)
 	if err != nil {
 		return nil, err
@@ -161,14 +185,19 @@ func (sas serviceAccounts) GetWithNested(
 			permissionsAliases[str] = pSl[i].Alias
 		}
 	}
-	return map[string]interface{}{
-		"id":                 sa.ID,
-		"name":               sa.Name,
-		"email":              sa.Email,
-		"picture":            sa.Picture,
-		"authenticationType": sa.AuthenticationType,
-		"permissions":        permissions,
-		"permissionsAliases": permissionsAliases,
+	roles, err := sas.repo.Roles.ForServiceAccountID(serviceAccountID)
+	if err != nil {
+		return nil, err
+	}
+	return &ServiceAccountWithNested{
+		ID:                 sa.ID,
+		Name:               sa.Name,
+		Email:              sa.Email,
+		Picture:            sa.Picture,
+		Roles:              roles,
+		AuthenticationType: sa.AuthenticationType,
+		PermissionsStrings: permissions,
+		PermissionsAliases: permissionsAliases,
 	}, nil
 }
 
