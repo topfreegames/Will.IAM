@@ -9,20 +9,20 @@ import (
 
 // Roles repository
 type Roles interface {
-	GetServiceAccounts(string) ([]models.ServiceAccount, error)
-	ForServiceAccountID(string) ([]models.Role, error)
-	Create(*models.Role) error
-	Update(*models.Role) error
 	Bind(*models.RoleBinding) error
-	WithNamePrefix(string, int) ([]models.Role, error)
+	Clone() Roles
+	Create(*models.Role) error
+	DropBindings(string) error
+	DropPermissions(string) error
+	ForServiceAccountID(string) ([]models.Role, error)
+	Get(string) (*models.Role, error)
+	GetServiceAccounts(string) ([]models.ServiceAccount, error)
 	List(*ListOptions) ([]models.Role, error)
 	ListCount() (int64, error)
 	Search(string, *ListOptions) ([]models.Role, error)
 	SearchCount(string) (int64, error)
-	Get(string) (*models.Role, error)
-	DropPermissions(string) error
-	DropBindings(string) error
-	Clone() Roles
+	Update(*models.Role) error
+	WithNamePrefix(string, int) ([]models.Role, error)
 	setStorage(*Storage)
 }
 

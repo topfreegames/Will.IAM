@@ -13,27 +13,28 @@ import (
 
 // ServiceAccounts define entrypoints for ServiceAccount actions
 type ServiceAccounts interface {
+	AuthenticateAccessToken(string) (*models.AccessTokenAuth, error)
+	AuthenticateKeyPair(string, string) (string, error)
 	Create(*models.ServiceAccount) error
 	CreateKeyPairType(string) (*models.ServiceAccount, error)
 	CreateOAuth2Type(string, string) (*models.ServiceAccount, error)
-	CreateWithNested(*ServiceAccountWithNested) error
-	UpdateWithNested(*ServiceAccountWithNested) error
-	AuthenticateAccessToken(string) (*models.AccessTokenAuth, error)
-	AuthenticateKeyPair(string, string) (string, error)
-	HasPermissionString(string, string) (bool, error)
-	HasAllOwnerPermissions(string, []models.Permission) (bool, error)
-	HasPermissionsStrings(string, []string) ([]bool, error)
-	HasPermissions(string, []models.Permission) ([]bool, error)
-	GetPermissions(string) ([]models.Permission, error)
 	CreatePermission(string, *models.Permission) error
-	Get(string) (*models.ServiceAccount, error)
-	GetWithNested(string) (*ServiceAccountWithNested, error)
+	CreateWithNested(*ServiceAccountWithNested) error
 	ForEmail(string) (*models.ServiceAccount, error)
+	Get(string) (*models.ServiceAccount, error)
+	GetPermissions(string) ([]models.Permission, error)
+	GetRoles(string) ([]models.Role, error)
+	GetWithNested(string) (*ServiceAccountWithNested, error)
+	HasAllOwnerPermissions(string, []models.Permission) (bool, error)
+	HasAllOwnerRolesPermissions(string, []string) (bool, error)
+	HasPermissionString(string, string) (bool, error)
+	HasPermissions(string, []models.Permission) ([]bool, error)
+	HasPermissionsStrings(string, []string) ([]bool, error)
 	List(*repositories.ListOptions) ([]models.ServiceAccount, int64, error)
+	UpdateWithNested(*ServiceAccountWithNested) error
 	Search(
 		string, *repositories.ListOptions,
 	) ([]models.ServiceAccount, int64, error)
-	GetRoles(string) ([]models.Role, error)
 	WithContext(context.Context) ServiceAccounts
 }
 
@@ -199,6 +200,20 @@ func (sas serviceAccounts) GetWithNested(
 		PermissionsStrings: permissions,
 		PermissionsAliases: permissionsAliases,
 	}, nil
+}
+
+func (sas serviceAccounts) HasAllOwnerRolesPermissions(
+	saID string, rolesIDs []string,
+) (bool, error) {
+	ps := []models.Permission{}
+	for _, roleID := range rolesIDs {
+		rps, err := sas.repo.Permissions.ForRole(roleID)
+		if err != nil {
+			return false, err
+		}
+		ps = append(ps, rps...)
+	}
+	return sas.HasAllOwnerPermissions(saID, ps)
 }
 
 func (sas serviceAccounts) Create(sa *models.ServiceAccount) error {

@@ -73,9 +73,7 @@ p.action, p.resource_hierarchy, p.alias FROM permissions p
 	return permissions, nil
 }
 
-func (ps *permissions) ForRole(
-	roleID string,
-) ([]models.Permission, error) {
+func (ps *permissions) ForRole(roleID string) ([]models.Permission, error) {
 	permissions := []models.Permission{}
 	if _, err := ps.storage.PG.DB.Query(
 		&permissions, `SELECT id, role_id, service, ownership_level,

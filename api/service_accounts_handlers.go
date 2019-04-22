@@ -115,6 +115,15 @@ func processServiceAccountWithNestedFromReq(
 		return nil, err
 	}
 	saID, _ := getServiceAccountID(r.Context())
+	uc := sasUC.WithContext(r.Context())
+	hasAllOwnerRolesPermissions, err :=
+		uc.HasAllOwnerRolesPermissions(saID, sawn.RolesIDs)
+	if err != nil {
+		return nil, err
+	}
+	if !hasAllOwnerRolesPermissions {
+		return nil, errors.NewUserDoesntHaveAllPermissionsError()
+	}
 	sawn.Permissions, err = models.BuildPermissions(sawn.PermissionsStrings)
 	if err != nil {
 		return nil, err
@@ -124,8 +133,7 @@ func processServiceAccountWithNestedFromReq(
 			sawn.Permissions[i].Alias = alias
 		}
 	}
-	has, err := sasUC.WithContext(r.Context()).
-		HasAllOwnerPermissions(saID, sawn.Permissions)
+	has, err := uc.HasAllOwnerPermissions(saID, sawn.Permissions)
 	if err != nil {
 		return nil, err
 	}
