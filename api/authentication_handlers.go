@@ -115,6 +115,7 @@ func authenticationValidHandler(
 		}
 		v := url.Values{}
 		v.Add("accessToken", authResult.AccessToken)
+		v.Add("email", authResult.Email)
 		sep := "?"
 		if strings.Contains(referer, "?") {
 			sep = "&"

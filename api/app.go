@@ -217,7 +217,7 @@ func (a *App) GetRouter() *mux.Router {
 	r.Handle(
 		"/service_accounts/{id}",
 		authMiddle(hasPermissionMiddle(models.BuildWillIAMPermissionLender(
-			"EditServiceAccounts", "{id}",
+			"EditServiceAccount", "{id}",
 		), http.HandlerFunc(
 			serviceAccountsGetHandler(sasUC),
 		))),
@@ -237,7 +237,7 @@ func (a *App) GetRouter() *mux.Router {
 	r.Handle(
 		"/service_accounts/{id}",
 		authMiddle(hasPermissionMiddle(models.BuildWillIAMPermissionLender(
-			"EditServiceAccounts", "{id}",
+			"EditServiceAccount", "{id}",
 		), http.HandlerFunc(
 			serviceAccountsUpdateHandler(sasUC),
 		))),
