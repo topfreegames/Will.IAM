@@ -26,11 +26,9 @@ type Middleware struct {
 
 var client *http.Client
 
-// NewMiddleware returns an instance of *Middleware.
+// NewMiddleware returns a callback that returns *Middleware,
+// which implements http.Handler.
 // Permission is used to build the Will.IAM permission string.
-// Opts is a optional list of configurations fot the http client that
-// requests Will.IAM service, check the pkg/http/client.go file for
-// the available options.
 func NewMiddleware(
 	logger logrus.FieldLogger,
 	config *viper.Viper,
