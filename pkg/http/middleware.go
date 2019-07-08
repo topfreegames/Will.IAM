@@ -66,14 +66,14 @@ func (m *Middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token := accessTokenFromHeader(r)
+	token, authorization := accessTokenFromHeader(r)
 	if token == "" {
 		m.logger.Error("request with empty access token")
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
 
-	status, err := m.getAuthStatus(m.permission.build(r), token)
+	status, err := m.getAuthStatus(m.permission.build(r), authorization)
 	if err != nil {
 		m.logger.WithError(err).Error("failed to get auth status")
 		w.WriteHeader(http.StatusInternalServerError)
@@ -105,7 +105,7 @@ type auth struct {
 	email string
 }
 
-func (m *Middleware) getAuthStatus(permission, token string) (*auth, error) {
+func (m *Middleware) getAuthStatus(permission, authorization string) (*auth, error) {
 	url := fmt.Sprintf("%s/permissions/has?permission=%s",
 		m.iamURL, url.QueryEscape(permission))
 
@@ -114,7 +114,7 @@ func (m *Middleware) getAuthStatus(permission, token string) (*auth, error) {
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", authorization)
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -148,12 +148,13 @@ func (p *permission) build(r *http.Request) string {
 		p.Service, p.OwnershipLevel, p.Action, p.Resource(r))
 }
 
-func accessTokenFromHeader(r *http.Request) string {
+func accessTokenFromHeader(r *http.Request) (string, string) {
+	// e.g.: Authorization: Bearer <token>
 	auth := r.Header.Get("Authorization")
 	parts := strings.Split(auth, " ")
 	if len(parts) < 2 {
-		return ""
+		return "", ""
 	}
 
-	return parts[1]
+	return parts[1], auth
 }
