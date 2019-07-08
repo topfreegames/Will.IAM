@@ -151,9 +151,9 @@ func (p *permission) build(r *http.Request) string {
 func accessTokenFromHeader(r *http.Request) string {
 	auth := r.Header.Get("Authorization")
 	parts := strings.Split(auth, " ")
-	if len(parts) < 1 {
+	if len(parts) < 2 {
 		return ""
 	}
 
-	return parts[0]
+	return parts[1]
 }
