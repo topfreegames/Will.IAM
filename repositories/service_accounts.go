@@ -77,7 +77,7 @@ func (sas serviceAccounts) HasPermission(
 	if _, err := sas.storage.PG.DB.Query(
 		&count,
 		`SELECT count(*) FROM permissions
-    WHERE service = ? AND (action = ? OR action = '*')
+    WHERE (service = ? OR service = '*') AND (action = ? OR action = '*')
     AND CASE WHEN ? = 'RO' THEN ownership_level = 'RO' ELSE true END
     AND role_id = ANY (SELECT role_id FROM role_bindings WHERE service_account_id = ?)
     AND resource_hierarchy = ANY (?)
@@ -131,7 +131,7 @@ func (sas serviceAccounts) ListWithPermission(
     INNER JOIN role_bindings rb ON rb.service_account_id = sas.id
     WHERE rb.role_id = ANY (
       SELECT DISTINCT(role_id) FROM permissions
-      WHERE service = ? AND (action = ? OR action = '*')
+      WHERE (service = ? OR service = '*') AND (action = ? OR action = '*')
       AND CASE WHEN ? = 'RO' THEN ownership_level = 'RO' ELSE true END
       AND resource_hierarchy = ANY (?)
     )
