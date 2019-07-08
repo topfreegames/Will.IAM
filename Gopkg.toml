@@ -22,4 +22,8 @@
 
 [[constraint]]
   name = "github.com/topfreegames/extensions"
-  version = "v8.0.1"
+  version = "8.2.2"
+
+[[constraint]]
+  name = "github.com/go-pg/pg"
+  version = "~6.15.0"

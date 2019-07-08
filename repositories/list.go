@@ -7,11 +7,17 @@ type ListOptions struct {
 }
 
 // Limit as used in queries
-func (lo ListOptions) Limit() int {
+func (lo ListOptions) Limit() interface{} {
+	if lo.PageSize == 0 {
+		return nil
+	}
 	return lo.PageSize
 }
 
 // Offset as used in queries
 func (lo ListOptions) Offset() int {
+	if lo.PageSize == 0 {
+		return 0
+	}
 	return lo.PageSize * lo.Page
 }

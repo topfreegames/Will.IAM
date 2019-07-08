@@ -3,9 +3,9 @@ package repositories
 import (
 	"fmt"
 
+	"github.com/go-pg/pg"
 	"github.com/topfreegames/Will.IAM/errors"
 	"github.com/topfreegames/Will.IAM/models"
-	"github.com/go-pg/pg"
 )
 
 // ServiceAccounts repository
@@ -17,8 +17,11 @@ type ServiceAccounts interface {
 	ForEmails([]string) ([]models.ServiceAccount, error)
 	ForKeyPair(string, string) (*models.ServiceAccount, error)
 	Get(string) (*models.ServiceAccount, error)
+	HasPermission(string, models.Permission) (bool, error)
 	List(*ListOptions) ([]models.ServiceAccount, error)
 	ListCount() (int64, error)
+	ListWithPermission(*ListOptions, models.Permission) ([]models.ServiceAccount, error)
+	ListWithPermissionCount(models.Permission) (int64, error)
 	Search(string, *ListOptions) ([]models.ServiceAccount, error)
 	SearchCount(string) (int64, error)
 	Update(*models.ServiceAccount) error
@@ -67,6 +70,25 @@ func (sas serviceAccounts) DropBindings(saID string) error {
 	return err
 }
 
+func (sas serviceAccounts) HasPermission(
+	serviceAccountID string, permission models.Permission,
+) (bool, error) {
+	var count int64
+	if _, err := sas.storage.PG.DB.Query(
+		&count,
+		`SELECT count(*) FROM permissions
+    WHERE service = ? AND (action = ? OR action = '*')
+    AND CASE WHEN ? = 'RO' THEN ownership_level = 'RO' ELSE true END
+    AND role_id = ANY (SELECT role_id FROM role_bindings WHERE service_account_id = ?)
+    AND resource_hierarchy = ANY (?)
+    `, permission.Service, permission.Action.String(), permission.OwnershipLevel.String(),
+		serviceAccountID, pg.Array(permission.ResourceHierarchy.PermissionMatches()),
+	); err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
 func (sas serviceAccounts) List(
 	lo *ListOptions,
 ) ([]models.ServiceAccount, error) {
@@ -93,6 +115,49 @@ func (sas serviceAccounts) ListCount() (int64, error) {
 	if _, err := sas.storage.PG.DB.Query(
 		&count,
 		`SELECT count(*) FROM service_accounts`,
+	); err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+func (sas serviceAccounts) ListWithPermission(
+	lo *ListOptions, permission models.Permission,
+) ([]models.ServiceAccount, error) {
+	var saSl []models.ServiceAccount
+	if _, err := sas.storage.PG.DB.Query(
+		&saSl,
+		`SELECT DISTINCT sas.id, sas.name, sas.email, sas.picture, sas.base_role_id FROM service_accounts sas
+    INNER JOIN role_bindings rb ON rb.service_account_id = sas.id
+    WHERE rb.role_id = ANY (
+      SELECT DISTINCT(role_id) FROM permissions
+      WHERE service = ? AND (action = ? OR action = '*')
+      AND CASE WHEN ? = 'RO' THEN ownership_level = 'RO' ELSE true END
+      AND resource_hierarchy = ANY (?)
+    )
+    ORDER BY name ASC LIMIT ? OFFSET ?
+    `, permission.Service, permission.Action.String(), permission.OwnershipLevel.String(),
+		pg.Array(permission.ResourceHierarchy.PermissionMatches()), lo.Limit(), lo.Offset(),
+	); err != nil {
+		return nil, err
+	}
+	return saSl, nil
+}
+
+func (sas serviceAccounts) ListWithPermissionCount(permission models.Permission) (int64, error) {
+	var count int64
+	if _, err := sas.storage.PG.DB.Query(
+		&count,
+		`SELECT count(distinct sas.id) FROM service_accounts sas
+    INNER JOIN role_bindings rb ON rb.service_account_id = sas.id
+    WHERE rb.role_id = ANY (
+      SELECT DISTINCT(role_id) FROM permissions
+      WHERE service = ? AND (action = ? OR action = '*')
+      AND CASE WHEN ? = 'RO' THEN ownership_level = 'RO' ELSE true END
+      AND resource_hierarchy = ANY (?)
+    )
+    `, permission.Service, permission.Action.String(), permission.OwnershipLevel.String(),
+		pg.Array(permission.ResourceHierarchy.PermissionMatches()),
 	); err != nil {
 		return 0, err
 	}

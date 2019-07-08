@@ -61,6 +61,50 @@ func TestValidatePermission(t *testing.T) {
 	}
 }
 
+func TestResourceHierarchyPermissionMatches(t *testing.T) {
+	type testCase struct {
+		str      string
+		expected []string
+	}
+	tt := []testCase{
+		testCase{
+			str:      "*",
+			expected: []string{"*"},
+		},
+		testCase{
+			str:      "x::*",
+			expected: []string{"*", "x::*"},
+		},
+		testCase{
+			str:      "x::y",
+			expected: []string{"*", "x::*", "x::y"},
+		},
+		testCase{
+			str:      "x::y::*",
+			expected: []string{"*", "x::*", "x::y::*"},
+		},
+		testCase{
+			str:      "x::y::z",
+			expected: []string{"*", "x::*", "x::y::*", "x::y::z"},
+		},
+	}
+	for _, tt := range tt {
+		rh := models.BuildResourceHierarchy(tt.str)
+		matches := rh.PermissionMatches()
+		if len(matches) != len(tt.expected) {
+			t.Errorf("Expected matches to have len %d. Got %d", len(tt.expected), len(matches))
+			t.Errorf("Expected matches: %#v. Got %#v", tt.expected, matches)
+			return
+		}
+		for i := range matches {
+			if matches[i] != tt.expected[i] {
+				t.Errorf("Expected matches[%d] to be %s. Got %s", i, tt.expected[i], matches[i])
+				return
+			}
+		}
+	}
+}
+
 func TestBuildPermission(t *testing.T) {
 	type testCase struct {
 		str        string
