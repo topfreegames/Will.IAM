@@ -5,10 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	ehttp "github.com/topfreegames/extensions/http"
 )
 
@@ -31,16 +29,14 @@ var client *http.Client
 // Permission is used to build the Will.IAM permission string.
 func NewMiddleware(
 	logger logrus.FieldLogger,
-	config *viper.Viper,
+	cnf *config,
 	ownershipLevel, action string,
 	resource func(*http.Request) string,
 ) func(http.Handler) http.Handler {
-	configure(config)
-
 	if client == nil {
 		client = &http.Client{
-			Transport: getHTTPTransport(config),
-			Timeout:   config.GetDuration("william.http.timeout"),
+			Transport: getHTTPTransport(cnf),
+			Timeout:   cnf.HTTP.Timeout,
 		}
 
 		ehttp.Instrument(client)
@@ -50,13 +46,13 @@ func NewMiddleware(
 		return &Middleware{
 			logger: logger,
 			permission: &permission{
-				Service:        config.GetString("william.permission.service"),
+				Service:        cnf.Permission.Service,
 				OwnershipLevel: ownershipLevel,
 				Action:         action,
 				Resource:       resource,
 			},
-			iamURL:  config.GetString("william.url"),
-			enabled: config.GetBool("william.enabled"),
+			iamURL:  cnf.URL,
+			enabled: cnf.Middleware.Enabled,
 			next:    next,
 		}
 	}
@@ -160,14 +156,4 @@ func accessTokenFromHeader(r *http.Request) string {
 	}
 
 	return parts[0]
-}
-
-func configure(config *viper.Viper) {
-	config.SetDefault(
-		"william.http.maxIdleConnsPerHost", http.DefaultMaxIdleConnsPerHost)
-	config.SetDefault("william.http.maxIdleConns", 100)
-	config.SetDefault("william.http.timeout", 500*time.Millisecond)
-	config.SetDefault("william.url", "http://localhost:4040")
-	config.SetDefault("william.enabled", false)
-	config.SetDefault("william.permission.service", "service")
 }
