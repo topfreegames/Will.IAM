@@ -26,14 +26,6 @@
   version = "v9"
 
 [[projects]]
-  digest = "1:4b0d3367477f903ca3ff99881873c78f7d58fffb287d282a72959c6db7b1df24"
-  name = "github.com/bsm/redis-lock"
-  packages = ["."]
-  pruneopts = ""
-  revision = "0a3c01f764b4864e340afce6ffa26c97da6927bb"
-  version = "v6.0.0"
-
-[[projects]]
   branch = "master"
   digest = "1:c46fd324e7902268373e1b337436a6377c196e2dbd7b35624c6256d29d494e78"
   name = "github.com/codahale/hdrhistogram"
@@ -50,6 +42,25 @@
   version = "v1.4.7"
 
 [[projects]]
+  branch = "master"
+  digest = "1:07e61aa0dbedb58cd3284be048687ad1870b577897f4930a27cf3280274df9cc"
+  name = "github.com/ghostec/Will.IAM"
+  packages = [
+    "api",
+    "cmd",
+    "constants",
+    "errors",
+    "models",
+    "oauth2",
+    "repositories",
+    "testing",
+    "usecases",
+    "utils",
+  ]
+  pruneopts = ""
+  revision = "3bc06f6a40c90fd95e13e993ece2b84b0d0a703a"
+
+[[projects]]
   digest = "1:f02ce599b8e76c373d1b5308134f2a4ead6ed45156114ce8a2febc9703a03e86"
   name = "github.com/go-pg/pg"
   packages = [
@@ -63,23 +74,6 @@
   pruneopts = ""
   revision = "ae5d5e7df4b2e598390e10b66b849c6af94f092b"
   version = "v6.15.1"
-
-[[projects]]
-  digest = "1:a6cdfb0c4a4d3e0893e52d305685fff4c79b9199dcbf8f29b11218a0da761b70"
-  name = "github.com/go-redis/redis"
-  packages = [
-    ".",
-    "internal",
-    "internal/consistenthash",
-    "internal/hashtag",
-    "internal/pool",
-    "internal/proto",
-    "internal/singleflight",
-    "internal/util",
-  ]
-  pruneopts = ""
-  revision = "480db94d33e6088e08d628833b6c0705451d24bb"
-  version = "v6.13.2"
 
 [[projects]]
   digest = "1:141cc9fc6279592458b304038bd16a05ef477d125c6dad281216345a11746fd7"
@@ -278,13 +272,10 @@
     "oauth2",
     "pg",
     "pg/interfaces",
-    "redis",
-    "redis/interfaces",
     "router",
     "tracing",
     "tracing/http",
     "tracing/pg",
-    "tracing/redis",
   ]
   pruneopts = ""
   revision = "bf5d347597d78c559f40fe9c7ef15ffb4241fecf"
@@ -425,6 +416,16 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/ghostec/Will.IAM/api",
+    "github.com/ghostec/Will.IAM/cmd",
+    "github.com/ghostec/Will.IAM/constants",
+    "github.com/ghostec/Will.IAM/errors",
+    "github.com/ghostec/Will.IAM/models",
+    "github.com/ghostec/Will.IAM/oauth2",
+    "github.com/ghostec/Will.IAM/repositories",
+    "github.com/ghostec/Will.IAM/testing",
+    "github.com/ghostec/Will.IAM/usecases",
+    "github.com/ghostec/Will.IAM/utils",
     "github.com/go-pg/pg",
     "github.com/gofrs/uuid",
     "github.com/gorilla/mux",
@@ -436,7 +437,6 @@
     "github.com/topfreegames/extensions/jaeger",
     "github.com/topfreegames/extensions/middleware",
     "github.com/topfreegames/extensions/pg",
-    "github.com/topfreegames/extensions/redis",
     "github.com/topfreegames/extensions/router",
   ]
   solver-name = "gps-cdcl"
