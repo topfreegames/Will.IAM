@@ -24,7 +24,7 @@ setup-deps:
 
 # run this if you don't have migrate
 setup-migrate:
-	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.2.2/migrate.$(platform)-amd64.tar.gz | tar xvz
+	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(platform)-amd64.tar.gz | tar xvz
 	@mv migrate.$(platform)-amd64 /usr/local/bin/migrate
 
 deps:

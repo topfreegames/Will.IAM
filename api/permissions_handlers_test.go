@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ghostec/Will.IAM/models"
-	helpers "github.com/ghostec/Will.IAM/testing"
+	"github.com/topfreegames/Will.IAM/models"
+	helpers "github.com/topfreegames/Will.IAM/testing"
 	"github.com/gofrs/uuid"
 )
 

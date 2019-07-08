@@ -5,7 +5,7 @@ package api_test
 import (
 	"testing"
 
-	"github.com/ghostec/Will.IAM/api"
+	"github.com/topfreegames/Will.IAM/api"
 )
 
 func TestReplaceIdInPermission(t *testing.T) {

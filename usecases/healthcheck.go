@@ -1,6 +1,6 @@
 package usecases
 
-import "github.com/ghostec/Will.IAM/repositories"
+import "github.com/topfreegames/Will.IAM/repositories"
 
 // Healthcheck usecase
 type Healthcheck interface {

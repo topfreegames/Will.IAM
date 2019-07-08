@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ghostec/Will.IAM/utils"
+	"github.com/topfreegames/Will.IAM/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )

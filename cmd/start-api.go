@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/ghostec/Will.IAM/api"
-	"github.com/ghostec/Will.IAM/constants"
-	"github.com/ghostec/Will.IAM/utils"
+	"github.com/topfreegames/Will.IAM/api"
+	"github.com/topfreegames/Will.IAM/constants"
+	"github.com/topfreegames/Will.IAM/utils"
 	"github.com/spf13/cobra"
 )
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ghostec/Will.IAM/constants"
+	"github.com/topfreegames/Will.IAM/constants"
 )
 
 // OwnershipLevel defines the holding rights about a resource

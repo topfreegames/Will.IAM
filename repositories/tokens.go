@@ -1,8 +1,8 @@
 package repositories
 
 import (
-	"github.com/ghostec/Will.IAM/errors"
-	"github.com/ghostec/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/errors"
+	"github.com/topfreegames/Will.IAM/models"
 )
 
 // Tokens contract

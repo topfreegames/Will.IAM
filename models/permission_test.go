@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/ghostec/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/models"
 )
 
 func TestValidatePermission(t *testing.T) {

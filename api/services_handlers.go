@@ -5,8 +5,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ghostec/Will.IAM/models"
-	"github.com/ghostec/Will.IAM/usecases"
+	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/gorilla/mux"
 	"github.com/topfreegames/extensions/middleware"
 )

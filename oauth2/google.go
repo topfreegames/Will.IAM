@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ghostec/Will.IAM/errors"
-	"github.com/ghostec/Will.IAM/models"
-	"github.com/ghostec/Will.IAM/repositories"
+	"github.com/topfreegames/Will.IAM/errors"
+	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/repositories"
 	extensionsHttp "github.com/topfreegames/extensions/http"
 )
 

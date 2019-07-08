@@ -6,12 +6,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/ghostec/Will.IAM/api"
-	"github.com/ghostec/Will.IAM/models"
-	"github.com/ghostec/Will.IAM/oauth2"
-	"github.com/ghostec/Will.IAM/repositories"
-	"github.com/ghostec/Will.IAM/usecases"
-	"github.com/ghostec/Will.IAM/utils"
+	"github.com/topfreegames/Will.IAM/api"
+	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/oauth2"
+	"github.com/topfreegames/Will.IAM/repositories"
+	"github.com/topfreegames/Will.IAM/usecases"
+	"github.com/topfreegames/Will.IAM/utils"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

@@ -3,8 +3,8 @@ package usecases
 import (
 	"context"
 
-	"github.com/ghostec/Will.IAM/models"
-	"github.com/ghostec/Will.IAM/repositories"
+	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/repositories"
 )
 
 // Roles define entrypoints for ServiceAccount actions

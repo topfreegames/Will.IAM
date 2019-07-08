@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/ghostec/Will.IAM/constants"
-	"github.com/ghostec/Will.IAM/models"
-	"github.com/ghostec/Will.IAM/repositories"
+	"github.com/topfreegames/Will.IAM/constants"
+	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/repositories"
 	extensionsHttp "github.com/topfreegames/extensions/http"
 )
 

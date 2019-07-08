@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/ghostec/Will.IAM/constants"
-	"github.com/ghostec/Will.IAM/errors"
-	"github.com/ghostec/Will.IAM/repositories"
+	"github.com/topfreegames/Will.IAM/constants"
+	"github.com/topfreegames/Will.IAM/errors"
+	"github.com/topfreegames/Will.IAM/repositories"
 )
 
 func keepJSONFieldsSl(
