@@ -3,6 +3,7 @@ package models
 // PermissionRequest type
 type PermissionRequest struct {
 	ID                string                 `json:"id" pg:"id"`
+	OwnershipLevel    OwnershipLevel         `json:"ownershipLevel" pg:"ownership_level"`
 	Service           string                 `json:"service" pg:"service"`
 	Action            Action                 `json:"action" pg:"action"`
 	ResourceHierarchy ResourceHierarchy      `json:"resourceHierarchy" pg:"resource_hierarchy"`
@@ -10,6 +11,16 @@ type PermissionRequest struct {
 	State             PermissionRequestState `json:"state" pg:"state"`
 	ServiceAccountID  string                 `json:"serviceAccountId" pg:"service_account_id"`
 	CreatedUpdatedAt
+}
+
+// Permission returns requested Permission from pr
+func (pr PermissionRequest) Permission() Permission {
+	return Permission{
+		Service:           pr.Service,
+		Action:            pr.Action,
+		OwnershipLevel:    pr.OwnershipLevel,
+		ResourceHierarchy: pr.ResourceHierarchy,
+	}
 }
 
 // PermissionRequestState type

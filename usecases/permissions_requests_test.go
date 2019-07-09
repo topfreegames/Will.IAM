@@ -25,6 +25,7 @@ func TestPermissionsRequestsCreate(t *testing.T) {
 	pr := &models.PermissionRequest{
 		ServiceAccountID:  saM.ID,
 		Service:           "SomeService",
+		OwnershipLevel:    models.OwnershipLevels.Lender,
 		Action:            "Do",
 		ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 		Message:           "Please I need it",
@@ -52,6 +53,10 @@ func TestPermissionsRequestsCreate(t *testing.T) {
 		t.Errorf("Expected Service to be SomeService. Got %s", prs[0].Service)
 		return
 	}
+	if prs[0].OwnershipLevel != models.OwnershipLevels.Lender {
+		t.Errorf("Expected OwnershipLevel to be RL. Got %s", prs[0].OwnershipLevel)
+		return
+	}
 	if prs[0].Action != "Do" {
 		t.Errorf("Expected Action to be Do. Got %s", prs[0].Action)
 		return
@@ -62,6 +67,93 @@ func TestPermissionsRequestsCreate(t *testing.T) {
 	}
 	if prs[0].Message != "Please I need it" {
 		t.Errorf("Expected Message to be 'Please I need it'. Got %s", prs[0].Message)
+		return
+	}
+}
+
+func TestPermissionsRequestsCreateDuplicate(t *testing.T) {
+	helpers.CleanupPG(t)
+	saUC := helpers.GetServiceAccountsUseCase(t)
+	saM := &models.ServiceAccount{
+		Name:  "some name",
+		Email: "test@domain.com",
+	}
+	if err := saUC.Create(saM); err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+	prsUC := helpers.GetPermissionsRequestsUseCase(t)
+	pr := &models.PermissionRequest{
+		ServiceAccountID:  saM.ID,
+		Service:           "SomeService",
+		OwnershipLevel:    models.OwnershipLevels.Owner,
+		Action:            "Do",
+		ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
+		Message:           "Please I need it",
+	}
+	if err := prsUC.Create(pr); err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+		return
+	}
+	// ID == ""
+	prD := &models.PermissionRequest{
+		ServiceAccountID:  saM.ID,
+		Service:           "SomeService",
+		OwnershipLevel:    models.OwnershipLevels.Owner,
+		Action:            "Do",
+		ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
+		Message:           "Please I need it",
+	}
+	if err := prsUC.Create(prD); err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+		return
+	}
+	if prD.ID != "" {
+		t.Error("Expected duplicate to have nil ID")
+		return
+	}
+	storage := helpers.GetStorage(t)
+	var prs []models.PermissionRequest
+	storage.PG.DB.Query(&prs, "SELECT * FROM permissions_requests")
+	if len(prs) != 1 {
+		t.Errorf("Expected 1 permission request. Got %d", len(prs))
+		return
+	}
+}
+
+func TestPermissionsRequestsCreateWhenAlreadyHasPermission(t *testing.T) {
+	helpers.CleanupPG(t)
+	saUC := helpers.GetServiceAccountsUseCase(t)
+	ps, err := models.BuildPermissions([]string{"SomeService::RO::Do::x::y"})
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+	saM := &usecases.ServiceAccountWithNested{
+		Name:               "some name",
+		Email:              "test@domain.com",
+		Permissions:        ps,
+		AuthenticationType: models.AuthenticationTypes.OAuth2,
+	}
+	if err := saUC.CreateWithNested(saM); err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+	prsUC := helpers.GetPermissionsRequestsUseCase(t)
+	pr := &models.PermissionRequest{
+		ServiceAccountID:  saM.ID,
+		Service:           "SomeService",
+		OwnershipLevel:    models.OwnershipLevels.Owner,
+		Action:            "Do",
+		ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
+		Message:           "Please I need it",
+	}
+	if err := prsUC.Create(pr); err == nil || err.Error() != "user already has requested permission" {
+		t.Errorf("Expected error 'user already has requested permission'")
+		return
+	}
+	storage := helpers.GetStorage(t)
+	var prs []models.PermissionRequest
+	storage.PG.DB.Query(&prs, "SELECT * FROM permissions_requests")
+	if len(prs) != 0 {
+		t.Errorf("Expected 0 permission request. Got %d", len(prs))
 		return
 	}
 }
@@ -80,6 +172,7 @@ func TestPermissionsRequestsListVisibleTo(t *testing.T) {
 	pr := &models.PermissionRequest{
 		ServiceAccountID:  saM.ID,
 		Service:           "SomeService",
+		OwnershipLevel:    models.OwnershipLevels.Lender,
 		Action:            "Do",
 		ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 		Message:           "Please I need it",
@@ -110,6 +203,10 @@ func TestPermissionsRequestsListVisibleTo(t *testing.T) {
 		t.Errorf("Expected Service to be SomeService. Got %s", prs[0].Service)
 		return
 	}
+	if prs[0].OwnershipLevel != models.OwnershipLevels.Lender {
+		t.Errorf("Expected OwnershipLevel to be RL. Got %s", prs[0].OwnershipLevel)
+		return
+	}
 	if prs[0].Action != "Do" {
 		t.Errorf("Expected Action to be Do. Got %s", prs[0].Action)
 		return
@@ -137,6 +234,7 @@ func TestPermissionsRequestsListVisibleToWhenNonRoot(t *testing.T) {
 			reqs: []*models.PermissionRequest{
 				&models.PermissionRequest{
 					Service:           "SomeService",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "Do",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",
@@ -150,6 +248,7 @@ func TestPermissionsRequestsListVisibleToWhenNonRoot(t *testing.T) {
 			reqs: []*models.PermissionRequest{
 				&models.PermissionRequest{
 					Service:           "SomeService",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "Do",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",
@@ -163,6 +262,7 @@ func TestPermissionsRequestsListVisibleToWhenNonRoot(t *testing.T) {
 			reqs: []*models.PermissionRequest{
 				&models.PermissionRequest{
 					Service:           "SomeService",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "Do",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",
@@ -176,6 +276,7 @@ func TestPermissionsRequestsListVisibleToWhenNonRoot(t *testing.T) {
 			reqs: []*models.PermissionRequest{
 				&models.PermissionRequest{
 					Service:           "SomeService",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "Do",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",
@@ -188,12 +289,14 @@ func TestPermissionsRequestsListVisibleToWhenNonRoot(t *testing.T) {
 			reqs: []*models.PermissionRequest{
 				&models.PermissionRequest{
 					Service:           "SomeOther",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "YY",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",
 				},
 				&models.PermissionRequest{
 					Service:           "SomeService",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "XX",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",
@@ -206,12 +309,14 @@ func TestPermissionsRequestsListVisibleToWhenNonRoot(t *testing.T) {
 			reqs: []*models.PermissionRequest{
 				&models.PermissionRequest{
 					Service:           "SomeOther",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "YY",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",
 				},
 				&models.PermissionRequest{
 					Service:           "SomeService",
+					OwnershipLevel:    models.OwnershipLevels.Lender,
 					Action:            "XX",
 					ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
 					Message:           "Please I need it",

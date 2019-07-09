@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -89,4 +90,13 @@ func buildListOptions(r *http.Request) (*repositories.ListOptions, error) {
 		Page:     int(page),
 		PageSize: pageSize,
 	}, nil
+}
+
+func readBodyTo(r *http.Request, i interface{}) error {
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, i)
 }

@@ -350,11 +350,11 @@ func (a *App) GetRouter() *mux.Router {
 	).
 		Methods("GET").Name("permissionsGetPermissionRequestsHandler")
 
-	// r.Handle(
-	// 	"/permissions/requests",
-	// 	authMiddle(http.HandlerFunc(permissionsRequestsCreateHandler(prsUC))),
-	// ).
-	// 	Methods("POST").Name("permissionsCreatePermissionRequestHandler")
+	r.Handle(
+		"/permissions/requests",
+		authMiddle(http.HandlerFunc(permissionsRequestsCreateHandler(prsUC))),
+	).
+		Methods("POST").Name("permissionsCreatePermissionRequestHandler")
 
 	amUseCase := usecases.NewAM(repo, rsUC)
 

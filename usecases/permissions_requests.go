@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/repositories"
@@ -25,9 +26,20 @@ func (prs permissionsRequests) WithContext(ctx context.Context) PermissionsReque
 	return &permissionsRequests{prs.repo.WithContext(ctx), ctx}
 }
 
+// Create checks if pr.saID has open request OR has permission, if not it opens a permission request
 func (prs permissionsRequests) Create(pr *models.PermissionRequest) error {
-	pr.State = models.PermissionRequestStates.Open
-	return prs.repo.PermissionsRequests.Create(pr)
+	return prs.repo.WithPGTx(prs.ctx, func(repo *repositories.All) error {
+		pr.State = models.PermissionRequestStates.Open
+		has, err := repo.ServiceAccounts.HasPermission(pr.ServiceAccountID, pr.Permission())
+		if err != nil {
+			return err
+		}
+		if has {
+			// TODO: replace by proper error
+			return fmt.Errorf("user already has requested permission")
+		}
+		return repo.PermissionsRequests.Create(pr)
+	})
 }
 
 func (prs permissionsRequests) ListOpenRequestsVisibleTo(

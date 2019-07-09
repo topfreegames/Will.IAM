@@ -4,53 +4,35 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/topfreegames/extensions/middleware"
 )
 
-// func permissionsRequestsCreateHandler(
-// 	prsUC usecases.PermissionsRequests,
-// ) func(http.ResponseWriter, *http.Request) {
-// 	return func(w http.ResponseWriter, r *http.Request) {
-// 		l := middleware.GetLogger(r.Context())
-// 		body, err := ioutil.ReadAll(r.Body)
-// 		defer r.Body.Close()
-// 		if err != nil {
-// 			l.Error(err)
-// 			w.WriteHeader(http.StatusInternalServerError)
-// 			return
-// 		}
-// 		pr := &models.PermissionRequest{}
-// 		err = json.Unmarshal(body, pr)
-// 		if err != nil {
-// 			l.Error(err)
-// 			w.WriteHeader(http.StatusInternalServerError)
-// 			return
-// 		}
-//
-// 		saID, _ := getServiceAccountID(r.Context())
-// 		has, err := sasUC.WithContext(r.Context()).
-// 			HasPermissionString(saID, pr.ToLenderString())
-// 		if err != nil {
-// 			l.Error(err)
-// 			w.WriteHeader(http.StatusInternalServerError)
-// 			return
-// 		}
-// 		if has {
-// 			w.WriteHeader(http.StatusNoContent)
-// 			return
-// 		}
-//
-// 		// TODO: check if there's a request with state = Created already NoContent
-//
-// 		err = psUC.WithContext(r.Context()).CreateRequest(saID, pr)
-// 		if err != nil {
-// 			w.WriteHeader(http.StatusInternalServerError)
-// 			return
-// 		}
-// 		w.WriteHeader(http.StatusAccepted)
-// 	}
-// }
+func permissionsRequestsCreateHandler(
+	prsUC usecases.PermissionsRequests,
+) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := middleware.GetLogger(r.Context())
+		pr := &models.PermissionRequest{}
+		if err := readBodyTo(r, pr); err != nil {
+			l.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		saID, _ := getServiceAccountID(r.Context())
+		pr.ServiceAccountID = saID
+		if err := prsUC.WithContext(r.Context()).Create(pr); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		if pr.ID == "" {
+			w.WriteHeader(http.StatusAccepted)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+	}
+}
 
 func permissionsRequestsListOpenHandler(
 	prsUC usecases.PermissionsRequests,
