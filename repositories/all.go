@@ -8,25 +8,27 @@ import (
 
 // All holds a reference to each possible repository interface
 type All struct {
-	Permissions     Permissions
-	Roles           Roles
-	ServiceAccounts ServiceAccounts
-	Services        Services
-	Tokens          Tokens
-	Healthcheck     Healthcheck
-	storage         *Storage
+	Permissions
+	PermissionsRequests
+	Roles
+	ServiceAccounts
+	Services
+	Tokens
+	Healthcheck
+	storage *Storage
 }
 
 // New All ctor
 func New(s *Storage) *All {
 	return &All{
-		Permissions:     NewPermissions(s),
-		Roles:           NewRoles(s),
-		ServiceAccounts: NewServiceAccounts(s),
-		Services:        NewServices(s),
-		Tokens:          NewTokens(s),
-		Healthcheck:     NewHealthcheck(s),
-		storage:         s,
+		Permissions:         NewPermissions(s),
+		PermissionsRequests: NewPermissionsRequests(s),
+		Roles:               NewRoles(s),
+		ServiceAccounts:     NewServiceAccounts(s),
+		Services:            NewServices(s),
+		Tokens:              NewTokens(s),
+		Healthcheck:         NewHealthcheck(s),
+		storage:             s,
 	}
 }
 
@@ -59,14 +61,16 @@ func (a *All) WithPGTx(ctx context.Context, fn func(repo *All) error) error {
 
 func (a *All) cloneWithStorage(s *Storage) *All {
 	c := &All{
-		Permissions:     a.Permissions.Clone(),
-		Roles:           a.Roles.Clone(),
-		ServiceAccounts: a.ServiceAccounts.Clone(),
-		Services:        a.Services.Clone(),
-		Tokens:          a.Tokens.Clone(),
-		storage:         s,
+		Permissions:         a.Permissions.Clone(),
+		PermissionsRequests: a.PermissionsRequests.Clone(),
+		Roles:               a.Roles.Clone(),
+		ServiceAccounts:     a.ServiceAccounts.Clone(),
+		Services:            a.Services.Clone(),
+		Tokens:              a.Tokens.Clone(),
+		storage:             s,
 	}
 	c.Permissions.setStorage(s)
+	c.PermissionsRequests.setStorage(s)
 	c.Roles.setStorage(s)
 	c.ServiceAccounts.setStorage(s)
 	c.Services.setStorage(s)

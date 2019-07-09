@@ -2,18 +2,19 @@ package testing
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/topfreegames/Will.IAM/api"
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/oauth2"
 	"github.com/topfreegames/Will.IAM/repositories"
 	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/topfreegames/Will.IAM/utils"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // GetConfig gets config for tests
@@ -94,6 +95,12 @@ func GetServicesUseCase(t *testing.T) usecases.Services {
 	return usecases.NewServices(GetRepo(t)).WithContext(context.Background())
 }
 
+// GetPermissionsRequestsUseCase returns a usecases.PermissionsRequests
+func GetPermissionsRequestsUseCase(t *testing.T) usecases.PermissionsRequests {
+	t.Helper()
+	return usecases.NewPermissionsRequests(GetRepo(t)).WithContext(context.Background())
+}
+
 // CreateRootServiceAccount creates a root service account with root access
 func CreateRootServiceAccount(t *testing.T) *models.ServiceAccount {
 	saUC := GetServiceAccountsUseCase(t)
@@ -110,4 +117,22 @@ func CreateRootServiceAccount(t *testing.T) *models.ServiceAccount {
 		panic(err)
 	}
 	return rootSA
+}
+
+func CleanupPG(t *testing.T) {
+	t.Helper()
+	storage := GetStorage(t)
+	rels := []string{
+		"permissions_requests",
+		"permissions",
+		"role_bindings",
+		"roles",
+		"service_accounts",
+		"services",
+	}
+	for _, rel := range rels {
+		if _, err := storage.PG.DB.Exec(fmt.Sprintf("DELETE FROM %s;", rel)); err != nil {
+			panic(err)
+		}
+	}
 }

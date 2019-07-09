@@ -5,10 +5,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/topfreegames/Will.IAM/errors"
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/usecases"
-	"github.com/gorilla/mux"
 	"github.com/topfreegames/extensions/middleware"
 )
 
@@ -46,50 +46,6 @@ func permissionsDeleteHandler(
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-	}
-}
-
-func permissionsCreatePermissionRequestHandler(
-	sasUC usecases.ServiceAccounts, psUC usecases.Permissions,
-) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		l := middleware.GetLogger(r.Context())
-		body, err := ioutil.ReadAll(r.Body)
-		defer r.Body.Close()
-		if err != nil {
-			l.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		pr := &models.PermissionRequest{}
-		err = json.Unmarshal(body, pr)
-		if err != nil {
-			l.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		saID, _ := getServiceAccountID(r.Context())
-		has, err := sasUC.WithContext(r.Context()).
-			HasPermissionString(saID, pr.ToLenderString())
-		if err != nil {
-			l.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		if has {
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
-
-		// TODO: check if there's a request with state = Created already NoContent
-
-		err = psUC.WithContext(r.Context()).CreateRequest(saID, pr)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusAccepted)
 	}
 }
 
@@ -195,28 +151,6 @@ func permissionsAttributeToEmailsHandler(
 			return
 		}
 		w.WriteHeader(http.StatusOK)
-	}
-}
-
-func permissionsGetPermissionRequestsHandler(
-	sasUC usecases.ServiceAccounts, psUC usecases.Permissions,
-) func(http.ResponseWriter, *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		l := middleware.GetLogger(r.Context())
-		saID, _ := getServiceAccountID(r.Context())
-		prs, err := psUC.WithContext(r.Context()).GetPermissionRequests(saID)
-		if err != nil {
-			l.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		bts, err := json.Marshal(prs)
-		if err != nil {
-			l.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		WriteBytes(w, http.StatusOK, bts)
 	}
 }
 

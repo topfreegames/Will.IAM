@@ -12,8 +12,6 @@ type Permissions interface {
 	Get(string) (*models.Permission, error)
 	Delete(string) error
 	Create(*models.Permission) error
-	CreateRequest(string, *models.PermissionRequest) error
-	GetPermissionRequests(string) ([]models.PermissionRequest, error)
 	Attribute(*PermissionsAttribute) error
 	AttributeToEmails(*PermissionsAttributeToEmails) error
 	WithContext(context.Context) Permissions
@@ -52,21 +50,8 @@ func (ps permissions) Delete(id string) error {
 	return ps.repo.Permissions.Delete(id)
 }
 
-func (ps permissions) CreateRequest(
-	saID string, r *models.PermissionRequest,
-) error {
-	r.State = models.PermissionRequestStates.Created
-	return ps.repo.Permissions.CreateRequest(saID, r)
-}
-
 func (ps permissions) Create(p *models.Permission) error {
 	return ps.repo.Permissions.Create(p)
-}
-
-func (ps permissions) GetPermissionRequests(
-	saID string,
-) ([]models.PermissionRequest, error) {
-	return ps.repo.Permissions.GetPermissionRequests(saID)
 }
 
 func (ps permissions) Attribute(pa *PermissionsAttribute) error {

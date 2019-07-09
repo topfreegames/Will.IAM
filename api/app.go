@@ -5,15 +5,15 @@ import (
 	"net"
 	"net/http"
 
+	"github.com/gorilla/mux"
+	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"github.com/topfreegames/Will.IAM/constants"
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/oauth2"
 	"github.com/topfreegames/Will.IAM/repositories"
 	"github.com/topfreegames/Will.IAM/usecases"
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"github.com/topfreegames/extensions/jaeger"
 	"github.com/topfreegames/extensions/middleware"
 	"github.com/topfreegames/extensions/router"
@@ -244,6 +244,8 @@ func (a *App) GetRouter() *mux.Router {
 	).
 		Methods("PUT").Name("serviceAccountsUpdateHandler")
 
+	// roles
+
 	rsUC := usecases.NewRoles(repo)
 
 	r.Handle(
@@ -296,6 +298,8 @@ func (a *App) GetRouter() *mux.Router {
 	).
 		Methods("POST").Name("rolesCreateHandler")
 
+	// permissions
+
 	r.Handle(
 		"/permissions/{id}",
 		authMiddle(http.HandlerFunc(permissionsDeleteHandler(
@@ -303,14 +307,6 @@ func (a *App) GetRouter() *mux.Router {
 		))),
 	).
 		Methods("DELETE").Name("permissionsDeleteHandler")
-
-	r.Handle(
-		"/permissions/requests",
-		authMiddle(http.HandlerFunc(permissionsGetPermissionRequestsHandler(
-			sasUC, psUC,
-		))),
-	).
-		Methods("GET").Name("permissionsGetPermissionRequestsHandler")
 
 	r.Handle(
 		"/permissions/attribute",
@@ -344,13 +340,21 @@ func (a *App) GetRouter() *mux.Router {
 	).
 		Methods("POST").Name("permissionsHasManyHandler")
 
+	// permissions requests
+
+	prsUC := usecases.NewPermissionsRequests(repo)
+
 	r.Handle(
-		"/permissions/requests",
-		authMiddle(http.HandlerFunc(permissionsCreatePermissionRequestHandler(
-			sasUC, psUC,
-		))),
+		"/permissions/requests/open",
+		authMiddle(http.HandlerFunc(permissionsRequestsListOpenHandler(prsUC))),
 	).
-		Methods("PUT").Name("permissionsCreatePermissionRequestHandler")
+		Methods("GET").Name("permissionsGetPermissionRequestsHandler")
+
+	// r.Handle(
+	// 	"/permissions/requests",
+	// 	authMiddle(http.HandlerFunc(permissionsRequestsCreateHandler(prsUC))),
+	// ).
+	// 	Methods("POST").Name("permissionsCreatePermissionRequestHandler")
 
 	amUseCase := usecases.NewAM(repo, rsUC)
 

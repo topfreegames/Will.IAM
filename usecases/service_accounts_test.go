@@ -12,21 +12,8 @@ import (
 	"github.com/topfreegames/Will.IAM/usecases"
 )
 
-func beforeEachServiceAccounts(t *testing.T) {
-	t.Helper()
-	storage := helpers.GetStorage(t)
-	rels := []string{"permissions", "role_bindings", "service_accounts", "roles"}
-	for _, rel := range rels {
-		if _, err := storage.PG.DB.Exec(
-			fmt.Sprintf("DELETE FROM %s;", rel),
-		); err != nil {
-			panic(err)
-		}
-	}
-}
-
 func TestServiceAccountsCreate(t *testing.T) {
-	beforeEachServiceAccounts(t)
+	helpers.CleanupPG(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
 	saM := &models.ServiceAccount{
 		Name:  "some name",
@@ -41,7 +28,7 @@ func TestServiceAccountsCreate(t *testing.T) {
 }
 
 func TestServiceAccountsCreateShouldCreateRoleAndRoleBinding(t *testing.T) {
-	beforeEachServiceAccounts(t)
+	helpers.CleanupPG(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
 	saM := &models.ServiceAccount{
 		Name:  "some name",
@@ -152,7 +139,7 @@ var saHasPermissionTestCases = []saHasPermissionTestCase{
 
 func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
 	for i, tt := range saHasPermissionTestCases {
-		beforeEachServiceAccounts(t)
+		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
 		sa1Ps, err := models.BuildPermissions(tt.regPs)
 		if err != nil {
@@ -183,7 +170,7 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
 
 func TestServiceAccountsHasPermissionWhenPermissionsOnNonBaseRole(t *testing.T) {
 	for i, tt := range saHasPermissionTestCases {
-		beforeEachServiceAccounts(t)
+		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
 		sa1 := &models.ServiceAccount{
 			Name:  "sa1",
@@ -265,7 +252,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 
 func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T) {
 	for i, tt := range saListWithPermissionTestCases {
-		beforeEachServiceAccounts(t)
+		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
 		sas := []*usecases.ServiceAccountWithNested{}
 		for j, psStr := range tt.sasPs {
@@ -315,7 +302,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 
 func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing.T) {
 	for i, tt := range saListWithPermissionTestCases {
-		beforeEachServiceAccounts(t)
+		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
 		sas := []*models.ServiceAccount{}
 		for j, psStr := range tt.sasPs {
