@@ -25,8 +25,8 @@ func (prs *permissionsRequests) Clone() PermissionsRequests {
 func (prs *permissionsRequests) Create(pr *models.PermissionRequest) error {
 	_, err := prs.storage.PG.DB.Query(
 		pr, `INSERT INTO permissions_requests (service, ownership_level, action, resource_hierarchy,
-    message, state, service_account_id) VALUES (?service, ?ownership_level, ?action,
-    ?resource_hierarchy, ?message, ?state, ?service_account_id)
+    alias, message, state, service_account_id) VALUES (?service, ?ownership_level, ?action,
+    ?resource_hierarchy, ?alias, ?message, ?state, ?service_account_id)
     ON CONFLICT (service, ownership_level, action, resource_hierarchy, service_account_id)
     WHERE state = 'open' DO NOTHING RETURNING id`, pr,
 	)
@@ -70,7 +70,7 @@ func (prs *permissionsRequests) ListOpenRequestsVisibleTo(
 		&prSl, `
     SELECT DISTINCT pr.id, pr.service, pr.ownership_level, pr.action, pr.resource_hierarchy,
     pr.service_account_id, sas.picture AS requester_picture, sas.name AS requester_name, pr.state,
-    pr.message
+    pr.message, pr.alias
     FROM permissions_requests pr
     CROSS JOIN (SELECT service, action, resource_hierarchy FROM permissions
         WHERE role_id = ANY (SELECT role_id FROM role_bindings WHERE service_account_id = ?)

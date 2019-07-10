@@ -7,6 +7,7 @@ type PermissionRequest struct {
 	Service                   string                 `json:"service" pg:"service"`
 	Action                    Action                 `json:"action" pg:"action"`
 	ResourceHierarchy         ResourceHierarchy      `json:"resourceHierarchy" pg:"resource_hierarchy"`
+	Alias                     string                 `json:"alias" pg:"alias"`
 	Message                   string                 `json:"message" pg:"message"`
 	State                     PermissionRequestState `json:"state" pg:"state"`
 	ServiceAccountID          string                 `json:"serviceAccountId" pg:"service_account_id"`
@@ -23,6 +24,7 @@ func (pr PermissionRequest) Permission() Permission {
 		Action:            pr.Action,
 		OwnershipLevel:    pr.OwnershipLevel,
 		ResourceHierarchy: pr.ResourceHierarchy,
+		Alias:             pr.Alias,
 	}
 }
 

@@ -28,6 +28,7 @@ func TestPermissionsRequestsCreate(t *testing.T) {
 		OwnershipLevel:    models.OwnershipLevels.Lender,
 		Action:            "Do",
 		ResourceHierarchy: models.BuildResourceHierarchy("x::y"),
+		Alias:             "Some Alias",
 		Message:           "Please I need it",
 	}
 	if err := prsUC.Create(pr); err != nil {
@@ -63,6 +64,10 @@ func TestPermissionsRequestsCreate(t *testing.T) {
 	}
 	if prs[0].ResourceHierarchy != "x::y" {
 		t.Errorf("Expected ResourceHierarchy to be x::y. Got %s", prs[0].ResourceHierarchy)
+		return
+	}
+	if prs[0].Alias != "Some Alias" {
+		t.Errorf("Expected Alias to be Some Alias. Got %s", prs[0].Alias)
 		return
 	}
 	if prs[0].Message != "Please I need it" {
