@@ -3,8 +3,8 @@ package repositories
 import (
 	"fmt"
 
-	"github.com/ghostec/Will.IAM/errors"
-	"github.com/ghostec/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/errors"
+	"github.com/topfreegames/Will.IAM/models"
 )
 
 // Roles repository

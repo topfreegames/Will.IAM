@@ -1,6 +1,6 @@
 package repositories
 
-import "github.com/ghostec/Will.IAM/models"
+import "github.com/topfreegames/Will.IAM/models"
 
 // Services repository
 type Services interface {

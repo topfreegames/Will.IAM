@@ -3,7 +3,7 @@ package oauth2
 import (
 	"context"
 
-	"github.com/ghostec/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/models"
 )
 
 // Provider is the contract any OAuth2 implementation must follow

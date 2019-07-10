@@ -7,3 +7,7 @@ services:
     volumes:
       - "./docker_data/postgres:/var/lib/postgresql/data"
     container_name: Will.IAM_postgres_1
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=9999"

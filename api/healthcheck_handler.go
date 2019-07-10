@@ -3,7 +3,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/ghostec/Will.IAM/usecases"
+	"github.com/topfreegames/Will.IAM/usecases"
 )
 
 func healthcheckHandler(

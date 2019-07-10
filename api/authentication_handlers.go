@@ -6,10 +6,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ghostec/Will.IAM/errors"
-	"github.com/ghostec/Will.IAM/models"
-	"github.com/ghostec/Will.IAM/oauth2"
-	"github.com/ghostec/Will.IAM/usecases"
+	"github.com/topfreegames/Will.IAM/errors"
+	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/oauth2"
+	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/topfreegames/extensions/middleware"
 )
 

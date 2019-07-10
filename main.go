@@ -1,6 +1,6 @@
 package main
 
-import "github.com/ghostec/Will.IAM/cmd"
+import "github.com/topfreegames/Will.IAM/cmd"
 
 func main() {
 	cmd.Execute()

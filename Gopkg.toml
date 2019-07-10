@@ -21,17 +21,9 @@
 
 
 [[constraint]]
-  name = "github.com/gorilla/mux"
-  version = "1.6.2"
-
-[[constraint]]
-  name = "github.com/sirupsen/logrus"
-  version = "1.1.1"
-
-[[constraint]]
   name = "github.com/topfreegames/extensions"
-  version = "v8.0.1"
+  version = "8.2.2"
 
-[[override]]
-  name = "github.com/go-redis/redis"
-  version = "=v6.13.2"
+[[constraint]]
+  name = "github.com/go-pg/pg"
+  version = "~6.15.0"

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/ghostec/Will.IAM/constants"
+	"github.com/topfreegames/Will.IAM/constants"
 	"github.com/sirupsen/logrus"
 )
 

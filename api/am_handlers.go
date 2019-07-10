@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/ghostec/Will.IAM/usecases"
+	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/topfreegames/extensions/middleware"
 )
 

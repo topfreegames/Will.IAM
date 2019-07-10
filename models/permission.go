@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ghostec/Will.IAM/constants"
+	"github.com/topfreegames/Will.IAM/constants"
 )
 
 // OwnershipLevel defines the holding rights about a resource
@@ -59,9 +59,34 @@ func (a Action) String() string {
 // Open: maestro::sniper-3d::stag::*
 type ResourceHierarchy string
 
+// BuildResourceHierarchy returns an instance of ResourceHierarchy from a string
+func BuildResourceHierarchy(rh string) ResourceHierarchy {
+	return ResourceHierarchy(rh)
+}
+
 // All checks if rh matches any
 func (rh ResourceHierarchy) All() bool {
 	return string(rh) == "*"
+}
+
+// PermissionMatches returns a slice of all possible ways to check if a service account has
+// any level of permission over this ResourceHierarchy
+// Example: rh = "x::y::z".PermissionMatches() = ["*", "x::*", "x::y::*", "x::y::z"]
+func (rh ResourceHierarchy) PermissionMatches() []string {
+	whole := string(rh)
+	if whole == "*" {
+		return []string{whole}
+	}
+	parts := strings.Split(whole, "::")
+	ret := []string{"*"}
+	for i := 1; i < len(parts); i++ {
+		if parts[i] == "*" {
+			break
+		}
+		match := strings.Join(parts[:i], "::")
+		ret = append(ret, match+"::*")
+	}
+	return append(ret, whole)
 }
 
 type resourceHierarchy struct {

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ghostec/Will.IAM/errors"
-	"github.com/ghostec/Will.IAM/models"
-	"github.com/ghostec/Will.IAM/oauth2"
-	"github.com/ghostec/Will.IAM/repositories"
 	"github.com/gofrs/uuid"
+	"github.com/topfreegames/Will.IAM/errors"
+	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/oauth2"
+	"github.com/topfreegames/Will.IAM/repositories"
 )
 
 // ServiceAccounts define entrypoints for ServiceAccount actions
@@ -31,6 +31,9 @@ type ServiceAccounts interface {
 	HasPermissions(string, []models.Permission) ([]bool, error)
 	HasPermissionsStrings(string, []string) ([]bool, error)
 	List(*repositories.ListOptions) ([]models.ServiceAccount, int64, error)
+	ListWithPermission(
+		*repositories.ListOptions, models.Permission,
+	) ([]models.ServiceAccount, int64, error)
 	UpdateWithNested(*ServiceAccountWithNested) error
 	Search(
 		string, *repositories.ListOptions,
@@ -107,9 +110,10 @@ func (sas serviceAccounts) CreateWithNested(
 				return err
 			}
 		}
+		sawn.ID = sa.ID
 		for i := range sawn.RolesIDs {
 			if err := repo.Roles.Bind(&models.RoleBinding{
-				ServiceAccountID: sa.ID,
+				ServiceAccountID: sawn.ID,
 				RoleID:           sawn.RolesIDs[i],
 			}); err != nil {
 				return err
@@ -313,6 +317,22 @@ func (sas serviceAccounts) List(
 	return saSl, count, nil
 }
 
+// ListWithPermissions returns a list of all service accounts with permission
+// either through base role or any other role
+func (sas serviceAccounts) ListWithPermission(
+	lo *repositories.ListOptions, permission models.Permission,
+) ([]models.ServiceAccount, int64, error) {
+	saSl, err := sas.repo.ServiceAccounts.ListWithPermission(lo, permission)
+	if err != nil {
+		return nil, 0, err
+	}
+	count, err := sas.repo.ServiceAccounts.ListWithPermissionCount(permission)
+	if err != nil {
+		return nil, 0, err
+	}
+	return saSl, count, nil
+}
+
 // Search over Service Accounts names and emails
 func (sas serviceAccounts) Search(
 	term string, lo *repositories.ListOptions,
@@ -377,15 +397,11 @@ func (sas *serviceAccounts) AuthenticateKeyPair(
 func (sas serviceAccounts) HasPermissionString(
 	serviceAccountID, permissionStr string,
 ) (bool, error) {
-	permissions, err := sas.GetPermissions(serviceAccountID)
+	ps, err := models.BuildPermission(permissionStr)
 	if err != nil {
 		return false, err
 	}
-	permission, err := models.BuildPermission(permissionStr)
-	if err != nil {
-		return false, err
-	}
-	return permission.IsPresent(permissions), nil
+	return sas.repo.ServiceAccounts.HasPermission(serviceAccountID, ps)
 }
 
 func (sas serviceAccounts) HasAllOwnerPermissions(
