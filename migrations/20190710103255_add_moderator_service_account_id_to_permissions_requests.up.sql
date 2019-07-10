@@ -1,0 +1,1 @@
+ALTER TABLE permissions_requests ADD COLUMN moderator_service_account_id UUID;

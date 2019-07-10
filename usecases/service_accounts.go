@@ -487,12 +487,18 @@ func serviceAccountGetPermissions(
 func (sas serviceAccounts) CreatePermission(
 	serviceAccountID string, permission *models.Permission,
 ) error {
-	sa, err := sas.repo.ServiceAccounts.Get(serviceAccountID)
+	return createPermissionForServiceAccount(sas.repo, serviceAccountID, permission)
+}
+
+func createPermissionForServiceAccount(
+	repo *repositories.All, serviceAccountID string, permission *models.Permission,
+) error {
+	sa, err := repo.ServiceAccounts.Get(serviceAccountID)
 	if err != nil {
 		return err
 	}
 	permission.RoleID = sa.BaseRoleID
-	if err := sas.repo.Permissions.Create(permission); err != nil {
+	if err := repo.Permissions.Create(permission); err != nil {
 		return err
 	}
 	return nil

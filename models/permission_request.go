@@ -2,14 +2,17 @@ package models
 
 // PermissionRequest type
 type PermissionRequest struct {
-	ID                string                 `json:"id" pg:"id"`
-	OwnershipLevel    OwnershipLevel         `json:"ownershipLevel" pg:"ownership_level"`
-	Service           string                 `json:"service" pg:"service"`
-	Action            Action                 `json:"action" pg:"action"`
-	ResourceHierarchy ResourceHierarchy      `json:"resourceHierarchy" pg:"resource_hierarchy"`
-	Message           string                 `json:"message" pg:"message"`
-	State             PermissionRequestState `json:"state" pg:"state"`
-	ServiceAccountID  string                 `json:"serviceAccountId" pg:"service_account_id"`
+	ID                        string                 `json:"id" pg:"id"`
+	OwnershipLevel            OwnershipLevel         `json:"ownershipLevel" pg:"ownership_level"`
+	Service                   string                 `json:"service" pg:"service"`
+	Action                    Action                 `json:"action" pg:"action"`
+	ResourceHierarchy         ResourceHierarchy      `json:"resourceHierarchy" pg:"resource_hierarchy"`
+	Message                   string                 `json:"message" pg:"message"`
+	State                     PermissionRequestState `json:"state" pg:"state"`
+	ServiceAccountID          string                 `json:"serviceAccountId" pg:"service_account_id"`
+	RequesterPicture          string                 `json:"requesterPicture" pg:"requester_picture"`
+	RequesterName             string                 `json:"requesterName" pg:"requester_name"`
+	ModeratorServiceAccountID string                 `json:"moderatorServiceAccountId" pg:"moderator_service_account_id"`
 	CreatedUpdatedAt
 }
 

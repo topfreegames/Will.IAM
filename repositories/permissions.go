@@ -11,8 +11,6 @@ type Permissions interface {
 	ForServiceAccount(string) ([]models.Permission, error)
 	ForRole(string) ([]models.Permission, error)
 	Create(*models.Permission) error
-	CreateRequest(string, *models.PermissionRequest) error
-	GetPermissionRequests(string) ([]models.PermissionRequest, error)
 	Delete(string) error
 	Clone() Permissions
 	setStorage(*Storage)
@@ -39,22 +37,6 @@ action, resource_hierarchy, alias FROM permissions
 		return nil, errors.NewEntityNotFoundError(models.Permission{}, id)
 	}
 	return p, nil
-}
-
-// GetPermissionRequets retrieve permission requests for a service account
-func (ps *permissions) GetPermissionRequests(
-	saID string,
-) ([]models.PermissionRequest, error) {
-	prs := []models.PermissionRequest{}
-	_, err := ps.storage.PG.DB.Query(
-		&prs, `SELECT id, service, action, resource_hierarchy, message, state,
-		created_at, updated_at FROM permissions_requests
-		WHERE service_account_id = ?`, saID,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return prs, nil
 }
 
 func (ps *permissions) ForServiceAccount(
@@ -93,15 +75,6 @@ func (ps *permissions) Create(p *models.Permission) error {
 		ON CONFLICT DO NOTHING RETURNING id`, p.RoleID, p.Service, p.OwnershipLevel,
 		p.Action, p.ResourceHierarchy, p.Alias,
 	)
-	return err
-}
-func (ps *permissions) CreateRequest(
-	saID string, r *models.PermissionRequest,
-) error {
-	_, err := ps.storage.PG.DB.Query(r,
-		`INSERT INTO permissions_requests (service, action, resource_hierarchy,
-		message, state, service_account_id) VALUES (?, ?, ?, ?, ?, ?) RETURNING id`,
-		r.Service, r.Action, r.ResourceHierarchy, r.Message, r.State, saID)
 	return err
 }
 

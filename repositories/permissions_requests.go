@@ -6,6 +6,9 @@ import "github.com/topfreegames/Will.IAM/models"
 type PermissionsRequests interface {
 	Clone() PermissionsRequests
 	Create(*models.PermissionRequest) error
+	Deny(string, string) error
+	Get(string) (*models.PermissionRequest, error)
+	Grant(string, string) error
 	ListOpenRequestsVisibleTo(*ListOptions, string) ([]models.PermissionRequest, error)
 	ListOpenRequestsVisibleToCount(string) (int64, error)
 	setStorage(*Storage)
@@ -30,6 +33,32 @@ func (prs *permissionsRequests) Create(pr *models.PermissionRequest) error {
 	return err
 }
 
+func (prs *permissionsRequests) Deny(saID, prID string) error {
+	_, err := prs.storage.PG.DB.Exec(
+		`UPDATE permissions_requests SET state = ?, moderator_service_account_id = ?, updated_at = now()
+    WHERE id = ?`, models.PermissionRequestStates.Denied, saID, prID,
+	)
+	return err
+}
+
+func (prs *permissionsRequests) Get(prID string) (*models.PermissionRequest, error) {
+	var pr models.PermissionRequest
+	if _, err := prs.storage.PG.DB.Query(
+		&pr, ` SELECT * FROM permissions_requests WHERE id = ? `, prID,
+	); err != nil {
+		return nil, err
+	}
+	return &pr, nil
+}
+
+func (prs *permissionsRequests) Grant(saID, prID string) error {
+	_, err := prs.storage.PG.DB.Exec(
+		`UPDATE permissions_requests SET state = ?, moderator_service_account_id = ?, updated_at = now()
+    WHERE id = ?`, models.PermissionRequestStates.Granted, saID, prID,
+	)
+	return err
+}
+
 func (prs *permissionsRequests) ListOpenRequestsVisibleTo(
 	lo *ListOptions, saID string,
 ) ([]models.PermissionRequest, error) {
@@ -40,11 +69,13 @@ func (prs *permissionsRequests) ListOpenRequestsVisibleTo(
 		// eg: service::action::*, service::action::x::*, ... => service::action::x
 		&prSl, `
     SELECT DISTINCT pr.id, pr.service, pr.ownership_level, pr.action, pr.resource_hierarchy,
-    pr.service_account_id, pr.state, pr.message
+    pr.service_account_id, sas.picture AS requester_picture, sas.name AS requester_name, pr.state,
+    pr.message
     FROM permissions_requests pr
     CROSS JOIN (SELECT service, action, resource_hierarchy FROM permissions
         WHERE role_id = ANY (SELECT role_id FROM role_bindings WHERE service_account_id = ?)
         AND ownership_level = 'RO') saop
+    INNER JOIN service_accounts sas ON sas.id = pr.service_account_id
     WHERE state = 'open'
       AND CASE WHEN saop.service = '*' THEN true ELSE pr.service = saop.service END
       AND CASE WHEN saop.action = '*' THEN true ELSE pr.action = saop.action END

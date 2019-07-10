@@ -11,8 +11,5 @@ oauth2:
     hostedDomains:
       - domain1
       - domain2
-tokens:
-  cacheTTL: 10
-  enabled: true
 listOptions:
   defaultPageSize: 30

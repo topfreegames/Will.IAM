@@ -356,6 +356,18 @@ func (a *App) GetRouter() *mux.Router {
 	).
 		Methods("POST").Name("permissionsCreatePermissionRequestHandler")
 
+	r.Handle(
+		"/permissions/requests/{id}/grant",
+		authMiddle(http.HandlerFunc(permissionsRequestsGrantHandler(prsUC))),
+	).
+		Methods("PUT").Name("permissionsGetPermissionRequestsGrantHandler")
+
+	r.Handle(
+		"/permissions/requests/{id}/deny",
+		authMiddle(http.HandlerFunc(permissionsRequestsDenyHandler(prsUC))),
+	).
+		Methods("PUT").Name("permissionsGetPermissionRequestsDenyHandler")
+
 	amUseCase := usecases.NewAM(repo, rsUC)
 
 	r.Handle(
