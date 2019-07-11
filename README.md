@@ -2,16 +2,28 @@
 
 Will.IAM solves identity and access management.
 
-Desired features:
-
-* [X] Authentication with Google as OAUTH-2 provider.
-  * [ ] Refresh token
-* [ ] RBAC authorization
+* Authentication with Google as OAUTH-2 provider.
+  * Refresh token
+* RBAC authorization
   Permissions+Roles+/am
-* [X] SSO - Single Sign-On
-  * [X] SSO browser handler should save/get to/from localStorage and redirect to requester
+* SSO - Single Sign-On
+  * SSO browser handler should save/get to/from localStorage and redirect to requester
 
   Client redirects to server (browser), server has token in localStorage, redirects back with stored token. No button clicks :) Client should be careful to not log token to other parties (e.g google analytics)
+
+## TODO:
+
+### major
+
+* [ ] Reorganize pkg errors, fill errors/codes.go to keep track of all codes
+* [ ] Revisit errors to return 4xx where it makes sense. (Most places return 500)
+
+### minor
+
+* [ ] Replace %s + err.Error() by %v + err
+* [ ] Replace t.Errorf + return by t.Fatalf where it should stop early
+* [ ] Use api.ErrorResponse in other places
+* [ ] Use api.ListResponse in other places
 
 ## About RBAC use cases and implementation
 
@@ -63,15 +75,23 @@ E.g:
 
 **GET /am** -> will respond all verbs (actions) the requester has access
 
-**GET /am?permission=ListSchedulers** -> all regions that requester can ListSchedulers
+**GET /am?prefix=ListSchedulers** -> all regions that requester can ListSchedulers
 
-**GET /am?permission=ListSchedulers::NA** -> all games that requester can ListSchedulers in NA
+**GET /am?prefix=ListSchedulers::NA** -> all games that requester can ListSchedulers in NA
 
-**GET /am?permission=ListSchedulers::NA::Sniper3D** -> all schedulers in NA::Sniper3D
+**GET /am?prefix=ListSchedulers::NA::Sniper3D** -> all schedulers in NA::Sniper3D
 
 To a requester with full access over the client, this means it will list all possible permissions and resources possible to be granted OwnershipLevel::Action to another party.
 
-## Permission dependency
+### Complete permissions
+
+When calling GET /am?prefix={complete-permission-here} your server should respond with the full permission and alias, as it did when autocompleting. This helps Will.IAM request a trustful "alias" to fill permission requests.
+
+### Handling 403
+
+When an unauthorized request is made, a response with `{ "permission": {string}, "alias": {string} }` is expected.
+
+## Idea: Permission dependency
 
 A nice-to-have feature would be to declare permission dependencies. It should be expected that **Maestro::RL::EditScheduler::\*** implies following **Maestro::RL::ReadScheduler::\***
 

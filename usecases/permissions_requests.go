@@ -11,8 +11,8 @@ import (
 // PermissionsRequests define entrypoints for PermissionsRequests actions
 type PermissionsRequests interface {
 	Create(*models.PermissionRequest) error
-	Deny(string, string) error
-	Grant(string, string) error
+	Deny(saID string, prID string) error
+	Grant(saID string, prID string) error
 	ListOpenRequestsVisibleTo(
 		*repositories.ListOptions, string,
 	) ([]models.PermissionRequest, int64, error)
@@ -36,7 +36,7 @@ func (prs permissionsRequests) Create(pr *models.PermissionRequest) error {
 		case err != nil:
 			return err
 		case has:
-			// TODO: replace by proper error
+			// TODO(ghostec): replace by proper error
 			return fmt.Errorf("user already has requested permission")
 		}
 		return repo.PermissionsRequests.Create(pr)
@@ -52,7 +52,7 @@ func (prs permissionsRequests) Deny(saID, prID string) error {
 			return err
 		}
 		if pr.State != models.PermissionRequestStates.Open {
-			// TODO: replace by proper error
+			// TODO(ghostec): replace by proper error
 			return fmt.Errorf("permission request is closed")
 		}
 		ownerPermission := pr.Permission()
@@ -62,7 +62,7 @@ func (prs permissionsRequests) Deny(saID, prID string) error {
 			return err
 		}
 		if !has {
-			// TODO: replace by proper error
+			// TODO(ghostec): replace by proper error
 			return fmt.Errorf("user isn't owner of permission")
 		}
 		return repo.PermissionsRequests.Deny(saID, prID)
@@ -78,7 +78,7 @@ func (prs permissionsRequests) Grant(saID, prID string) error {
 			return err
 		}
 		if pr.State != models.PermissionRequestStates.Open {
-			// TODO: replace by proper error
+			// TODO(ghostec): replace by proper error
 			return fmt.Errorf("permission request is closed")
 		}
 		ownerPermission := pr.Permission()
@@ -88,7 +88,7 @@ func (prs permissionsRequests) Grant(saID, prID string) error {
 			return err
 		}
 		if !has {
-			// TODO: replace by proper error
+			// TODO(ghostec): replace by proper error
 			return fmt.Errorf("user isn't owner of permission")
 		}
 		p := pr.Permission()

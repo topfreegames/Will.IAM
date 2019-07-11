@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -76,10 +75,7 @@ func permissionsRequestsListOpenHandler(
 		saID, _ := getServiceAccountID(r.Context())
 		listOptions, err := buildListOptions(r)
 		if err != nil {
-			Write(
-				w, http.StatusUnprocessableEntity,
-				fmt.Sprintf(`{ "error": "%s"  }`, err.Error()),
-			)
+			WriteJSON(w, http.StatusUnprocessableEntity, ErrorResponse{Error: err.Error()})
 			return
 		}
 		prs, count, err := prsUC.WithContext(r.Context()).ListOpenRequestsVisibleTo(listOptions, saID)
@@ -88,9 +84,6 @@ func permissionsRequestsListOpenHandler(
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		WriteJSON(w, 200, map[string]interface{}{
-			"count":   count,
-			"results": prs,
-		})
+		WriteJSON(w, 200, ListResponse{Count: count, Results: prs})
 	}
 }

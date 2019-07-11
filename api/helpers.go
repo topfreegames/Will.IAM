@@ -12,6 +12,18 @@ import (
 	"github.com/topfreegames/Will.IAM/repositories"
 )
 
+// ListResponse is used when returning an array in results, normally used alongside
+// repositories.ListOptions
+type ListResponse struct {
+	Count   int64       `json:"count"`
+	Results interface{} `json:"results"`
+}
+
+// ErrorResponse is used when responding with an error
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 func keepJSONFieldsSl(
 	isl interface{}, keep ...string,
 ) ([]map[string]interface{}, error) {

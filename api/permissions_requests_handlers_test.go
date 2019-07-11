@@ -17,7 +17,7 @@ func TestPermissionsRequestsListHandler(t *testing.T) {
 	saUC := helpers.GetServiceAccountsUseCase(t)
 	sa, err := saUC.CreateKeyPairType("some sa")
 	if err != nil {
-		t.Fatalf("Unexpected error %s", err.Error())
+		t.Fatalf("Unexpected error %v", err.Error())
 	}
 	app := helpers.GetApp(t)
 	req, _ := http.NewRequest("POST", "/permissions/requests", strings.NewReader(`{
@@ -46,7 +46,7 @@ func TestPermissionsRequestsListHandler(t *testing.T) {
 	body := map[string]interface{}{}
 	err = json.Unmarshal([]byte(rec.Body.String()), &body)
 	if err != nil {
-		t.Fatalf("Unexpected error %s", err.Error())
+		t.Fatalf("Unexpected error %v", err.Error())
 	}
 	if body["count"].(float64) != 1 {
 		t.Fatalf("Expected to have 1 permission request. Got %f", body["count"])
@@ -54,16 +54,16 @@ func TestPermissionsRequestsListHandler(t *testing.T) {
 	prs := body["results"].([]interface{})
 	pr := prs[0].(map[string]interface{})
 	if pr["service"].(string) != "SomeService" {
-		t.Fatalf("Expected service to be SomeService. Got %s", pr["service"])
+		t.Errorf("Expected service to be SomeService. Got %s", pr["service"])
 	}
 	if pr["action"].(string) != "SomeAction" {
-		t.Fatalf("Expected action to be SomeAction. Got %s", pr["action"])
+		t.Errorf("Expected action to be SomeAction. Got %s", pr["action"])
 	}
 	msg := "hey, can I have this permission?"
 	if pr["message"].(string) != msg {
-		t.Fatalf("Expected message to be '%s'. Got '%s'", msg, pr["message"])
+		t.Errorf("Expected message to be '%s'. Got '%s'", msg, pr["message"])
 	}
 	if pr["state"].(string) != "open" {
-		t.Fatalf("Expected state to be Open. Got %s", pr["state"])
+		t.Errorf("Expected state to be Open. Got %s", pr["state"])
 	}
 }
