@@ -11,8 +11,7 @@ RUN cd /go/src/github.com/ghostec/Will.IAM && \
   mv bin/Will.IAM /app/Will.IAM && \
   mv config /app/config && \
   mv assets /app/assets && \
-  mv Makefile /app/Makefile && \
-  mv Sidecarfile /app/Sidecarfile
+  mv Makefile /app/Makefile
 
 FROM alpine:3.8
 
@@ -24,7 +23,6 @@ COPY --from=build-env /app/Will.IAM /app
 COPY --from=build-env /app/config /app/config
 COPY --from=build-env /app/assets /app/assets
 COPY --from=build-env /app/Makefile /app
-COPY --from=build-env /app/Sidecarfile /app
 
 EXPOSE 4040
 
