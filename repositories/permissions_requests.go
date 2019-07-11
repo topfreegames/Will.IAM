@@ -64,7 +64,7 @@ func (prs *permissionsRequests) ListOpenRequestsVisibleTo(
 ) ([]models.PermissionRequest, error) {
 	var prSl []models.PermissionRequest
 	if _, err := prs.storage.PG.DB.Query(
-		// TODO: this query can probably be optimized if we group saop by service, action, rh and try to
+		// this query can probably be optimized if we group saop by service, action, rh and try to
 		// keep only higher scopes
 		// eg: service::action::*, service::action::x::*, ... => service::action::x
 		&prSl, `

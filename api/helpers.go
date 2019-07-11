@@ -92,7 +92,8 @@ func buildListOptions(r *http.Request) (*repositories.ListOptions, error) {
 	}, nil
 }
 
-func readBodyTo(r *http.Request, i interface{}) error {
+// unmarshalBodyTo unmarshal content from r.Body to i and calls r.Body.Close()
+func unmarshalBodyTo(r *http.Request, i interface{}) error {
 	body, err := ioutil.ReadAll(r.Body)
 	defer r.Body.Close()
 	if err != nil {

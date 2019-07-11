@@ -16,7 +16,7 @@ func permissionsRequestsCreateHandler(
 	return func(w http.ResponseWriter, r *http.Request) {
 		l := middleware.GetLogger(r.Context())
 		pr := &models.PermissionRequest{}
-		if err := readBodyTo(r, pr); err != nil {
+		if err := unmarshalBodyTo(r, pr); err != nil {
 			l.WithError(err).Error("failed to read body")
 			w.WriteHeader(http.StatusInternalServerError)
 			return

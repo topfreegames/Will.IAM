@@ -32,11 +32,10 @@ func (prs permissionsRequests) WithContext(ctx context.Context) PermissionsReque
 func (prs permissionsRequests) Create(pr *models.PermissionRequest) error {
 	return prs.repo.WithPGTx(prs.ctx, func(repo *repositories.All) error {
 		pr.State = models.PermissionRequestStates.Open
-		has, err := repo.ServiceAccounts.HasPermission(pr.ServiceAccountID, pr.Permission())
-		if err != nil {
+		switch has, err := repo.ServiceAccounts.HasPermission(pr.ServiceAccountID, pr.Permission()); {
+		case err != nil:
 			return err
-		}
-		if has {
+		case has:
 			// TODO: replace by proper error
 			return fmt.Errorf("user already has requested permission")
 		}
