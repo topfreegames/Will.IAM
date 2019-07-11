@@ -5,6 +5,3 @@ jaeger:
 extensions:
   pg:
     database: Will.IAM-test
-tokens:
-  cacheTTL: 0
-  enabled: false

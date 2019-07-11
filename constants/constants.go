@@ -20,14 +20,10 @@ var AppInfo = struct {
 
 // constants from config
 var (
-	TokensCacheTTL             int
-	TokensCacheEnabled         bool
 	DefaultListOptionsPageSize int
 )
 
 // Set is called at start.Run
 func Set(config *viper.Viper) {
-	TokensCacheTTL = config.GetInt("tokens.cacheTTL")
-	TokensCacheEnabled = config.GetBool("tokens.enabled")
 	DefaultListOptionsPageSize = config.GetInt("listOptions.defaultPageSize")
 }

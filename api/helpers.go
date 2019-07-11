@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -10,6 +11,18 @@ import (
 	"github.com/topfreegames/Will.IAM/errors"
 	"github.com/topfreegames/Will.IAM/repositories"
 )
+
+// ListResponse is used when returning an array in results, normally used alongside
+// repositories.ListOptions
+type ListResponse struct {
+	Count   int64       `json:"count"`
+	Results interface{} `json:"results"`
+}
+
+// ErrorResponse is used when responding with an error
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
 
 func keepJSONFieldsSl(
 	isl interface{}, keep ...string,
@@ -89,4 +102,14 @@ func buildListOptions(r *http.Request) (*repositories.ListOptions, error) {
 		Page:     int(page),
 		PageSize: pageSize,
 	}, nil
+}
+
+// unmarshalBodyTo unmarshal content from r.Body to i and calls r.Body.Close()
+func unmarshalBodyTo(r *http.Request, i interface{}) error {
+	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(body, i)
 }
