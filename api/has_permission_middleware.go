@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/gorilla/mux"
+	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/topfreegames/extensions/middleware"
 )
 
@@ -31,9 +31,9 @@ func hasPermissionMiddlewareBuilder(
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
-			permission = ReplaceRequestVarsInPermission(mux.Vars(r), permission)
+			replaced := ReplaceRequestVarsInPermission(mux.Vars(r), permission)
 			has, err := sasUC.WithContext(r.Context()).
-				HasPermissionString(saID, permission)
+				HasPermissionString(saID, replaced)
 			if err != nil {
 				l.Error(err)
 				w.WriteHeader(http.StatusInternalServerError)
