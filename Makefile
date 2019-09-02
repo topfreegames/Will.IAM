@@ -9,14 +9,15 @@ database=postgres://postgres:$(project)@localhost:8432/$(project)?sslmode=disabl
 database_test=postgres://postgres:$(project)@localhost:8432/$(project_test)?sslmode=disable
 platform=darwin
 
+export GO111MODULE=on
+
 setup: setup-gin setup-project setup-deps
 
 setup-gin:
 	@go get github.com/codegangsta/gin
 
 setup-project:
-	@go get -u github.com/golang/dep/cmd/dep
-	@dep ensure
+	@go mod download
 
 setup-deps:
 	@make deps
