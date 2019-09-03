@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/topfreegames/Will.IAM/errors"
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/usecases"
-	"github.com/gorilla/mux"
 	"github.com/topfreegames/extensions/middleware"
 )
 
@@ -147,7 +147,8 @@ func serviceAccountsListHandler(
 	sasUC usecases.ServiceAccounts,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		l := middleware.GetLogger(r.Context())
+		ctx := r.Context()
+		l := middleware.GetLogger(ctx)
 		listOptions, err := buildListOptions(r)
 		if err != nil {
 			Write(
@@ -156,12 +157,38 @@ func serviceAccountsListHandler(
 			)
 			return
 		}
-		saSl, count, err := sasUC.WithContext(r.Context()).List(listOptions)
+
+		var saSl []models.ServiceAccount
+		var count int64
+		uc := sasUC.WithContext(ctx)
+		if permissionStr, ok := r.URL.Query()["permission"]; ok {
+			permission, err := models.BuildPermission(permissionStr[0])
+			if err != nil {
+				Write(
+					w, http.StatusUnprocessableEntity,
+					fmt.Sprintf(`{ "error": "%s"  }`, err.Error()),
+				)
+				return
+			}
+
+			// Check if user have that permission
+			saID, _ := getServiceAccountID(ctx)
+			has, _ := uc.HasAllOwnerPermissions(saID, []models.Permission{permission})
+			if !has {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+
+			saSl, count, err = uc.ListWithPermission(listOptions, permission)
+		} else {
+			saSl, count, err = uc.List(listOptions)
+		}
 		if err != nil {
 			l.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
 		results, err := keepJSONFields(
 			saSl, "id", "authenticationType", "name", "email", "picture",
 		)

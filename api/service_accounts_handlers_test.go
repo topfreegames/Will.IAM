@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	helpers "github.com/topfreegames/Will.IAM/testing"
@@ -81,6 +82,148 @@ func TestServiceAccountCreateHandler(t *testing.T) {
 		rec := helpers.DoRequest(t, req, app.GetRouter())
 		if rec.Code != tt.expectedStatus {
 			t.Errorf("Expected status %d. Got %d", tt.expectedStatus, rec.Code)
+		}
+	}
+}
+
+func TestServiceAccountListHandler(t *testing.T) {
+	beforeEachServiceAccountsHandlers(t)
+
+	rootSA := helpers.CreateRootServiceAccount(t)
+
+	app := helpers.GetApp(t)
+
+	req, _ := http.NewRequest(http.MethodGet, "/service_accounts", nil)
+	req.Header.Set("Authorization", fmt.Sprintf(
+		"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
+	))
+	rec := helpers.DoRequest(t, req, app.GetRouter())
+	if rec.Code != http.StatusOK {
+		t.Errorf("Expected status %d. Got %d", http.StatusOK, rec.Code)
+	}
+
+	jsRet := struct {
+		Count  int64 `json:"count"`
+		Result []struct {
+			ID                 string `json:"id"`
+			AuthenticationType string `json:"authenticationType"`
+			Email              string `json:"email"`
+			Name               string `json:"name"`
+			Picture            string `json:"picture"`
+		} `json:"results"`
+	}{}
+
+	json.Unmarshal(rec.Body.Bytes(), &jsRet)
+	if jsRet.Count != 1 {
+		t.Errorf("Expected count %d. Got %d", 1, jsRet.Count)
+	}
+
+	if len(jsRet.Result) != 1 {
+		t.Fatalf("Expected result len %d. Got %d", 1, len(jsRet.Result))
+	}
+
+	if jsRet.Result[0].Name != "root" {
+		t.Errorf("Expected name %s. Got %s", "root", jsRet.Result[0].Name)
+	}
+
+	if jsRet.Result[0].ID != rootSA.ID {
+		t.Errorf("Expected id %s. Got %s", rootSA.ID, jsRet.Result[0].ID)
+	}
+}
+
+func TestServiceAccountListWithPermissionHandler(t *testing.T) {
+	app := helpers.GetApp(t)
+
+	params := url.Values{}
+	params.Set("permission", "SC::RL::Edit::*")
+
+	saListWithPermissionTestCases := []struct {
+		sasPs    []string
+		test     string
+		expected []string
+	}{
+		{
+			sasPs: []string{
+				"Service1::RL::Do1::x::*",
+				"Service1::RL::Do1::x::y",
+				"Service1::RL::Do1::x::z",
+			},
+			test:     "Service1::RL::Do1::x::z",
+			expected: []string{"sa0", "sa2"},
+		},
+		{
+			sasPs: []string{
+				"Service1::RL::Do1::x::*",
+				"Service1::RL::Do1::x::y",
+				"Service1::RO::Do1::x::z",
+			},
+			test:     "Service1::RO::Do1::x::z",
+			expected: []string{"sa2"},
+		},
+		{
+			sasPs: []string{
+				"Service1::RL::Do1::x::*",
+				"Service1::RL::Do1::x::y",
+				"Service1::RO::Do1::x::z",
+			},
+			test:     "Service2::RO::Do1::x::z",
+			expected: []string{},
+		},
+		{
+			sasPs: []string{
+				"Service1::RL::Do1::x::*",
+				"Service1::RL::Do1::x::y",
+				"Service1::RO::*::x::z",
+			},
+			test:     "Service1::RO::Do1::x::z",
+			expected: []string{"sa2"},
+		},
+	}
+
+	for caseID, tt := range saListWithPermissionTestCases {
+		beforeEachServiceAccountsHandlers(t)
+		rootSA := helpers.CreateRootServiceAccount(t)
+
+		for i, p := range tt.sasPs {
+			helpers.CreateServiceAccountWithPermissions(t, fmt.Sprintf("sa%d", i), p)
+		}
+
+		params := url.Values{}
+		params.Set("permission", tt.test)
+
+		req, _ := http.NewRequest(http.MethodGet, "/service_accounts?"+params.Encode(), nil)
+		req.Header.Set("Authorization", fmt.Sprintf(
+			"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
+		))
+		rec := helpers.DoRequest(t, req, app.GetRouter())
+		if rec.Code != http.StatusOK {
+			t.Errorf("Expected status %d. Got %d", http.StatusOK, rec.Code)
+		}
+
+		jsRet := struct {
+			Count  int64 `json:"count"`
+			Result []struct {
+				ID                 string `json:"id"`
+				AuthenticationType string `json:"authenticationType"`
+				Email              string `json:"email"`
+				Name               string `json:"name"`
+				Picture            string `json:"picture"`
+			} `json:"results"`
+		}{}
+
+		json.Unmarshal(rec.Body.Bytes(), &jsRet)
+		if int(jsRet.Count) != len(tt.expected)+1 {
+			t.Errorf("Expected count %d. Got %d", len(tt.expected)+1, jsRet.Count)
+		}
+
+		if len(jsRet.Result) != len(tt.expected)+1 {
+			t.Fatalf("Expected result len %d. Got %d", len(tt.expected)+1, len(jsRet.Result))
+		}
+
+		for i := range tt.expected {
+			if tt.expected[i] != jsRet.Result[i+1].Name {
+				t.Errorf("Expected list[%d] to be %s. Got %s. Case: %d", i, tt.expected[i], jsRet.Result[i+1].Name, caseID)
+			}
 		}
 	}
 }
