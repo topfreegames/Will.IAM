@@ -149,7 +149,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RL::Do1::x::z",
 			},
 			test:     "Service1::RL::Do1::x::z",
-			expected: []string{"sa0", "sa2"},
+			expected: []string{"root", "sa0", "sa2"},
 		},
 		{
 			sasPs: []string{
@@ -158,7 +158,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RO::Do1::x::z",
 			},
 			test:     "Service1::RO::Do1::x::z",
-			expected: []string{"sa2"},
+			expected: []string{"root", "sa2"},
 		},
 		{
 			sasPs: []string{
@@ -167,7 +167,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RO::Do1::x::z",
 			},
 			test:     "Service2::RO::Do1::x::z",
-			expected: []string{},
+			expected: []string{"root"},
 		},
 		{
 			sasPs: []string{
@@ -176,7 +176,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RO::*::x::z",
 			},
 			test:     "Service1::RO::Do1::x::z",
-			expected: []string{"sa2"},
+			expected: []string{"root", "sa2"},
 		},
 	}
 
@@ -191,7 +191,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 		params := url.Values{}
 		params.Set("permission", tt.test)
 
-		req, _ := http.NewRequest(http.MethodGet, "/service_accounts?"+params.Encode(), nil)
+		req, _ := http.NewRequest(http.MethodGet, "/service_accounts/with_permission?"+params.Encode(), nil)
 		req.Header.Set("Authorization", fmt.Sprintf(
 			"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
 		))
@@ -212,17 +212,17 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 		}{}
 
 		json.Unmarshal(rec.Body.Bytes(), &jsRet)
-		if int(jsRet.Count) != len(tt.expected)+1 {
-			t.Errorf("Expected count %d. Got %d", len(tt.expected)+1, jsRet.Count)
+		if int(jsRet.Count) != len(tt.expected) {
+			t.Errorf("Expected count %d. Got %d", len(tt.expected), jsRet.Count)
 		}
 
-		if len(jsRet.Result) != len(tt.expected)+1 {
-			t.Fatalf("Expected result len %d. Got %d", len(tt.expected)+1, len(jsRet.Result))
+		if len(jsRet.Result) != len(tt.expected) {
+			t.Fatalf("Expected result len %d. Got %d", len(tt.expected), len(jsRet.Result))
 		}
 
 		for i := range tt.expected {
-			if tt.expected[i] != jsRet.Result[i+1].Name {
-				t.Errorf("Expected list[%d] to be %s. Got %s. Case: %d", i, tt.expected[i], jsRet.Result[i+1].Name, caseID)
+			if tt.expected[i] != jsRet.Result[i].Name {
+				t.Errorf("Expected list[%d] to be %s. Got %s. Case: %d", i, tt.expected[i], jsRet.Result[i].Name, caseID)
 			}
 		}
 	}

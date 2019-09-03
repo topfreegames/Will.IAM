@@ -147,8 +147,7 @@ func serviceAccountsListHandler(
 	sasUC usecases.ServiceAccounts,
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		l := middleware.GetLogger(ctx)
+		l := middleware.GetLogger(r.Context())
 		listOptions, err := buildListOptions(r)
 		if err != nil {
 			Write(
@@ -158,31 +157,7 @@ func serviceAccountsListHandler(
 			return
 		}
 
-		var saSl []models.ServiceAccount
-		var count int64
-		uc := sasUC.WithContext(ctx)
-		if permissionStr, ok := r.URL.Query()["permission"]; ok {
-			permission, err := models.BuildPermission(permissionStr[0])
-			if err != nil {
-				Write(
-					w, http.StatusUnprocessableEntity,
-					fmt.Sprintf(`{ "error": "%s"  }`, err.Error()),
-				)
-				return
-			}
-
-			// Check if user have that permission
-			saID, _ := getServiceAccountID(ctx)
-			has, _ := uc.HasAllOwnerPermissions(saID, []models.Permission{permission})
-			if !has {
-				w.WriteHeader(http.StatusForbidden)
-				return
-			}
-
-			saSl, count, err = uc.ListWithPermission(listOptions, permission)
-		} else {
-			saSl, count, err = uc.List(listOptions)
-		}
+		saSl, count, err := sasUC.WithContext(r.Context()).List(listOptions)
 		if err != nil {
 			l.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -190,7 +165,61 @@ func serviceAccountsListHandler(
 		}
 
 		results, err := keepJSONFields(
-			saSl, "id", "authenticationType", "name", "email", "picture",
+			saSl, "id", "authenticationType", "name", "email", "picture", "baseRoleId",
+		)
+		if err != nil {
+			l.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		ret := map[string]interface{}{
+			"count":   count,
+			"results": results,
+		}
+		WriteJSON(w, 200, ret)
+	}
+}
+
+func serviceAccountsListWithPermissionHandler(
+	sasUC usecases.ServiceAccounts,
+) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := middleware.GetLogger(r.Context())
+		listOptions, err := buildListOptions(r)
+		if err != nil {
+			Write(
+				w, http.StatusUnprocessableEntity,
+				fmt.Sprintf(`{"error": "%s"}`, err.Error()),
+			)
+			return
+		}
+
+		permissionStr := r.URL.Query().Get("permission")
+		permission, err := models.BuildPermission(permissionStr)
+		if err != nil {
+			Write(
+				w, http.StatusUnprocessableEntity,
+				fmt.Sprintf(`{"error": "%s"}`, err.Error()),
+			)
+			return
+		}
+		saID, _ := getServiceAccountID(r.Context())
+		saSl, count, err := sasUC.WithContext(r.Context()).ListWithPermission(saID, listOptions, permission)
+		if err != nil {
+			statusCode := http.StatusInternalServerError
+			if _, ok := err.(*errors.UserDoesntHavePermissionError); ok {
+				statusCode = err.(*errors.UserDoesntHavePermissionError).
+					StatusCode()
+			}
+			l.WithError(err).Error(
+				"serviceAccountsListWithPermissionHandler ListWithPermission",
+			)
+			w.WriteHeader(statusCode)
+			return
+		}
+
+		results, err := keepJSONFields(
+			saSl, "id", "authenticationType", "name", "email", "picture", "baseRoleId",
 		)
 		if err != nil {
 			l.Error(err)

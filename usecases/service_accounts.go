@@ -32,6 +32,7 @@ type ServiceAccounts interface {
 	HasPermissionsStrings(string, []string) ([]bool, error)
 	List(*repositories.ListOptions) ([]models.ServiceAccount, int64, error)
 	ListWithPermission(
+		string,
 		*repositories.ListOptions, models.Permission,
 	) ([]models.ServiceAccount, int64, error)
 	UpdateWithNested(*ServiceAccountWithNested) error
@@ -320,8 +321,20 @@ func (sas serviceAccounts) List(
 // ListWithPermissions returns a list of all service accounts with permission
 // either through base role or any other role
 func (sas serviceAccounts) ListWithPermission(
-	lo *repositories.ListOptions, permission models.Permission,
+	serviceAccountID string, lo *repositories.ListOptions, permission models.Permission,
 ) ([]models.ServiceAccount, int64, error) {
+	rootPermission := permission
+	rootPermission.OwnershipLevel = models.OwnershipLevels.Owner
+
+	has, err := sas.repo.ServiceAccounts.HasPermission(serviceAccountID, rootPermission)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	if !has {
+		return nil, 0, errors.NewUserDoesntHavePermissionError(rootPermission.String())
+	}
+
 	saSl, err := sas.repo.ServiceAccounts.ListWithPermission(lo, permission)
 	if err != nil {
 		return nil, 0, err

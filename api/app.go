@@ -209,6 +209,12 @@ func (a *App) GetRouter() *mux.Router {
 		Methods("GET").Name("serviceAccountsListHandler")
 
 	r.Handle(
+		"/service_accounts/with_permission",
+		authMiddle(http.HandlerFunc(serviceAccountsListWithPermissionHandler(sasUC))),
+	).
+		Methods("GET").Name("serviceAccountsListWithPermissionHandler")
+
+	r.Handle(
 		"/service_accounts/search",
 		authMiddle(http.HandlerFunc(serviceAccountsSearchHandler(sasUC))),
 	).
