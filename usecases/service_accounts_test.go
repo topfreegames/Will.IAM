@@ -219,7 +219,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RL::Do1::x::z"},
 		},
 		test:     "Service1::RL::Do1::x::z",
-		expected: []string{"sa0", "sa2"},
+		expected: []string{"root", "sa0", "sa2"},
 	},
 	saListWithPermissionTestCase{
 		sasPs: [][]string{
@@ -228,7 +228,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RO::Do1::x::z"},
 		},
 		test:     "Service1::RO::Do1::x::z",
-		expected: []string{"sa2"},
+		expected: []string{"root", "sa2"},
 	},
 	saListWithPermissionTestCase{
 		sasPs: [][]string{
@@ -237,7 +237,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RO::Do1::x::z"},
 		},
 		test:     "Service2::RO::Do1::x::z",
-		expected: []string{},
+		expected: []string{"root"},
 	},
 	saListWithPermissionTestCase{
 		sasPs: [][]string{
@@ -246,7 +246,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RO::*::x::z"},
 		},
 		test:     "Service1::RO::Do1::x::z",
-		expected: []string{"sa2"},
+		expected: []string{"root", "sa2"},
 	},
 }
 
@@ -254,6 +254,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 	for i, tt := range saListWithPermissionTestCases {
 		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
+		root := helpers.CreateRootServiceAccount(t)
 		sas := []*usecases.ServiceAccountWithNested{}
 		for j, psStr := range tt.sasPs {
 			ps, err := models.BuildPermissions(psStr)
@@ -278,13 +279,13 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
 			return
 		}
-		list, count, err := saUC.ListWithPermission(&repositories.ListOptions{}, ps)
+		list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
 		if err != nil {
 			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
 			return
 		}
 		if count != int64(len(tt.expected)) {
-			t.Errorf("Expected to have %d service accounts. Got %d. Case: %d", len(tt.sasPs), count, i)
+			t.Errorf("Expected to have %d service accounts. Got %d. Case: %d", len(tt.expected), count, i)
 			return
 		}
 		if len(list) != len(tt.expected) {
@@ -304,6 +305,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 	for i, tt := range saListWithPermissionTestCases {
 		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
+		root := helpers.CreateRootServiceAccount(t)
 		sas := []*models.ServiceAccount{}
 		for j, psStr := range tt.sasPs {
 			sa := &models.ServiceAccount{
@@ -334,13 +336,13 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
 			return
 		}
-		list, count, err := saUC.ListWithPermission(&repositories.ListOptions{}, ps)
+		list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
 		if err != nil {
 			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
 			return
 		}
 		if count != int64(len(tt.expected)) {
-			t.Errorf("Expected to have %d service accounts. Got %d. Case: %d", len(tt.sasPs), count, i)
+			t.Errorf("Expected to have %d service accounts. Got %d. Case: %d", len(tt.expected), count, i)
 			return
 		}
 		if len(list) != len(tt.expected) {

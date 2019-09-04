@@ -152,7 +152,7 @@ func (sas serviceAccounts) ListWithPermissionCount(permission models.Permission)
     INNER JOIN role_bindings rb ON rb.service_account_id = sas.id
     WHERE rb.role_id = ANY (
       SELECT DISTINCT(role_id) FROM permissions
-      WHERE service = ? AND (action = ? OR action = '*')
+      WHERE (service = ? OR service = '*') AND (action = ? OR action = '*')
       AND CASE WHEN ? = 'RO' THEN ownership_level = 'RO' ELSE true END
       AND resource_hierarchy = ANY (?)
     )

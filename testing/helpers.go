@@ -103,18 +103,26 @@ func GetPermissionsRequestsUseCase(t *testing.T) usecases.PermissionsRequests {
 
 // CreateRootServiceAccount creates a root service account with root access
 func CreateRootServiceAccount(t *testing.T) *models.ServiceAccount {
+	return CreateServiceAccountWithPermissions(t, "root", "*::RO::*::*")
+}
+
+// CreateServiceAccountWithPermissions create an account with a list of permissions
+func CreateServiceAccountWithPermissions(t *testing.T, name string, permissions ...string) *models.ServiceAccount {
 	saUC := GetServiceAccountsUseCase(t)
-	rootSA, err := saUC.CreateKeyPairType("root")
+	rootSA, err := saUC.CreateKeyPairType(name)
 	if err != nil {
 		panic(err)
 	}
-	p, err := models.BuildPermission("*::RO::*::*")
-	if err != nil {
-		panic(err)
-	}
-	err = saUC.CreatePermission(rootSA.ID, &p)
-	if err != nil {
-		panic(err)
+
+	for _, permission := range permissions {
+		p, err := models.BuildPermission(permission)
+		if err != nil {
+			panic(err)
+		}
+		err = saUC.CreatePermission(rootSA.ID, &p)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return rootSA
 }

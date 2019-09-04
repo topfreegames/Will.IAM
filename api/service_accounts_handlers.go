@@ -6,10 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/topfreegames/Will.IAM/errors"
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/usecases"
-	"github.com/gorilla/mux"
 	"github.com/topfreegames/extensions/middleware"
 )
 
@@ -156,14 +156,70 @@ func serviceAccountsListHandler(
 			)
 			return
 		}
+
 		saSl, count, err := sasUC.WithContext(r.Context()).List(listOptions)
 		if err != nil {
 			l.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
 		results, err := keepJSONFields(
-			saSl, "id", "authenticationType", "name", "email", "picture",
+			saSl, "id", "authenticationType", "name", "email", "picture", "baseRoleId",
+		)
+		if err != nil {
+			l.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		ret := map[string]interface{}{
+			"count":   count,
+			"results": results,
+		}
+		WriteJSON(w, 200, ret)
+	}
+}
+
+func serviceAccountsListWithPermissionHandler(
+	sasUC usecases.ServiceAccounts,
+) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := middleware.GetLogger(r.Context())
+		listOptions, err := buildListOptions(r)
+		if err != nil {
+			Write(
+				w, http.StatusUnprocessableEntity,
+				fmt.Sprintf(`{"error": "%s"}`, err.Error()),
+			)
+			return
+		}
+
+		permissionStr := r.URL.Query().Get("permission")
+		permission, err := models.BuildPermission(permissionStr)
+		if err != nil {
+			Write(
+				w, http.StatusUnprocessableEntity,
+				fmt.Sprintf(`{"error": "%s"}`, err.Error()),
+			)
+			return
+		}
+		saID, _ := getServiceAccountID(r.Context())
+		saSl, count, err := sasUC.WithContext(r.Context()).ListWithPermission(saID, listOptions, permission)
+		if err != nil {
+			statusCode := http.StatusInternalServerError
+			if _, ok := err.(*errors.UserDoesntHavePermissionError); ok {
+				statusCode = err.(*errors.UserDoesntHavePermissionError).
+					StatusCode()
+			}
+			l.WithError(err).Error(
+				"serviceAccountsListWithPermissionHandler ListWithPermission",
+			)
+			w.WriteHeader(statusCode)
+			return
+		}
+
+		results, err := keepJSONFields(
+			saSl, "id", "authenticationType", "name", "email", "picture", "baseRoleId",
 		)
 		if err != nil {
 			l.Error(err)
