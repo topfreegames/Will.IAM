@@ -1,28 +1,26 @@
-FROM golang:1.11-alpine AS build-env
+FROM golang:1.13-alpine AS build-env
 
-RUN mkdir -p /app/bin
+RUN apk add --no-cache make git
 
-RUN apk add --no-cache postgresql git make musl-dev gcc
+WORKDIR /Will.IAM
 
-ADD . /go/src/github.com/ghostec/Will.IAM
-RUN cd /go/src/github.com/ghostec/Will.IAM && \
-  make setup-project && \
-  make build && \
-  mv bin/Will.IAM /app/Will.IAM && \
-  mv config /app/config && \
-  mv assets /app/assets && \
-  mv Makefile /app/Makefile
+COPY go.mod .
+COPY go.sum .
 
-FROM alpine:3.8
+RUN go mod download
+
+COPY . .
+RUN make build
+
+FROM alpine:3.10
 
 RUN apk add --no-cache ca-certificates
   
 WORKDIR /app
 
-COPY --from=build-env /app/Will.IAM /app
-COPY --from=build-env /app/config /app/config
-COPY --from=build-env /app/assets /app/assets
-COPY --from=build-env /app/Makefile /app
+COPY --from=build-env /Will.IAM/bin/Will.IAM /app
+COPY --from=build-env /Will.IAM/config /app/config
+COPY --from=build-env /Will.IAM/assets /app/assets
 
 EXPOSE 4040
 
