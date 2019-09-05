@@ -14,7 +14,7 @@ import (
 // ServiceAccounts define entrypoints for ServiceAccount actions
 type ServiceAccounts interface {
 	AuthenticateAccessToken(string) (*models.AccessTokenAuth, error)
-	AuthenticateKeyPair(string, string) (string, error)
+	AuthenticateKeyPair(string, string) (*models.AccessKeyPairAuth, error)
 	Create(*models.ServiceAccount) error
 	CreateKeyPairType(string) (*models.ServiceAccount, error)
 	CreateOAuth2Type(string, string) (*models.ServiceAccount, error)
@@ -397,12 +397,15 @@ func (sas *serviceAccounts) AuthenticateAccessToken(
 // AuthenticateKeyPair verifies if key pair is valid
 func (sas *serviceAccounts) AuthenticateKeyPair(
 	keyID, keySecret string,
-) (string, error) {
+) (*models.AccessKeyPairAuth, error) {
 	sa, err := sas.repo.ServiceAccounts.ForKeyPair(keyID, keySecret)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return sa.ID, nil
+	return &models.AccessKeyPairAuth{
+		ServiceAccountID: sa.ID,
+		Name:             sa.Name,
+	}, nil
 }
 
 // HasPermissionString checks if user has the ownership level required to take an

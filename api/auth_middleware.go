@@ -39,14 +39,15 @@ func authMiddleware(
 			l := middleware.GetLogger(r.Context())
 			if parts[0] == "KeyPair" {
 				keyPair := strings.Split(parts[1], ":")
-				saID, err := sasUC.WithContext(r.Context()).
+				accessKeyPairAuth, err := sasUC.WithContext(r.Context()).
 					AuthenticateKeyPair(keyPair[0], keyPair[1])
 				if err != nil {
 					l.WithError(err).Error("auth failed")
 					w.WriteHeader(http.StatusInternalServerError)
 					return
 				}
-				ctx = context.WithValue(r.Context(), serviceAccountIDCtxKey, saID)
+				w.Header().Set("x-service-account-name", accessKeyPairAuth.Name)
+				ctx = context.WithValue(r.Context(), serviceAccountIDCtxKey, accessKeyPairAuth.ServiceAccountID)
 			} else if parts[0] == "Bearer" {
 				accessToken := parts[1]
 				accessTokenAuth, err := sasUC.WithContext(r.Context()).
