@@ -33,6 +33,12 @@ type AccessTokenAuth struct {
 	Email            string
 }
 
+// AccessKeyPairAuth store the ServicesAccountID and the name of the service
+type AccessKeyPairAuth struct {
+	ServiceAccountID string
+	Name             string
+}
+
 // AuthResult is the result of a successful authentication
 type AuthResult struct {
 	AccessToken string `json:"accessToken"`
