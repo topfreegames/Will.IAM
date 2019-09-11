@@ -11,10 +11,7 @@ platform=darwin
 
 export GO111MODULE=on
 
-setup: setup-gin setup-project setup-deps
-
-setup-gin:
-	@go get github.com/codegangsta/gin
+setup: setup-project setup-deps
 
 setup-project:
 	@go mod download
@@ -55,7 +52,7 @@ build-docker:
 	@docker build -t $(project) .
 
 run:
-	@gin -i --port 3001 --appPort 4040 --bin Will.IAM run start-api
+	@reflex -c reflex.conf -- sh -c ./Will.IAM start-api
 
 migrate:
 	@migrate -path migrations -database ${database} up
