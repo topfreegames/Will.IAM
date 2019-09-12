@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"github.com/spf13/cobra"
 	"github.com/topfreegames/Will.IAM/api"
 	"github.com/topfreegames/Will.IAM/constants"
 	"github.com/topfreegames/Will.IAM/utils"
-	"github.com/spf13/cobra"
 )
 
 // startAPICmd represents the start-api command
