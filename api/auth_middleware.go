@@ -37,7 +37,7 @@ func authMiddleware(
 			}
 			var ctx context.Context
 			l := middleware.GetLogger(r.Context())
-			if parts[0] == "KeyPair" {
+			if strings.EqualFold(parts[0], "KeyPair") {
 				keyPair := strings.Split(parts[1], ":")
 				accessKeyPairAuth, err := sasUC.WithContext(r.Context()).
 					AuthenticateKeyPair(keyPair[0], keyPair[1])
@@ -48,7 +48,7 @@ func authMiddleware(
 				}
 				w.Header().Set("x-service-account-name", accessKeyPairAuth.Name)
 				ctx = context.WithValue(r.Context(), serviceAccountIDCtxKey, accessKeyPairAuth.ServiceAccountID)
-			} else if parts[0] == "Bearer" {
+			} else if strings.EqualFold(parts[0], "Bearer") {
 				accessToken := parts[1]
 				accessTokenAuth, err := sasUC.WithContext(r.Context()).
 					AuthenticateAccessToken(accessToken)
