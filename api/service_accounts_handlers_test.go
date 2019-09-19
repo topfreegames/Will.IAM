@@ -69,7 +69,7 @@ func TestServiceAccountCreateHandler(t *testing.T) {
 	app := helpers.GetApp(t)
 	for _, tt := range tt {
 		beforeEachServiceAccountsHandlers(t)
-		rootSA := helpers.CreateRootServiceAccount(t)
+		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 		bts, err := json.Marshal(tt.body)
 		if err != nil {
 			t.Errorf("Unexpected error %s", err.Error())
@@ -89,7 +89,7 @@ func TestServiceAccountCreateHandler(t *testing.T) {
 func TestServiceAccountListHandler(t *testing.T) {
 	beforeEachServiceAccountsHandlers(t)
 
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 
 	app := helpers.GetApp(t)
 
@@ -182,10 +182,10 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 
 	for caseID, tt := range saListWithPermissionTestCases {
 		beforeEachServiceAccountsHandlers(t)
-		rootSA := helpers.CreateRootServiceAccount(t)
+		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 
 		for i, p := range tt.sasPs {
-			helpers.CreateServiceAccountWithPermissions(t, fmt.Sprintf("sa%d", i), p)
+			helpers.CreateServiceAccountWithPermissions(t, fmt.Sprintf("sa%d", i), fmt.Sprintf("sa%d@email.com", i), "OAuth", p)
 		}
 
 		params := url.Values{}

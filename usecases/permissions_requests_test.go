@@ -193,7 +193,7 @@ func TestPermissionsRequestsListVisibleTo(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
 	}
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	prs, count, err := prsUC.ListOpenRequestsVisibleTo(&repositories.ListOptions{}, rootSA.ID)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
@@ -421,7 +421,7 @@ func TestPermissionsRequestsGrant(t *testing.T) {
 		t.Errorf("Expected saM to NOT have permission")
 		return
 	}
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	if err := prsUC.Grant(rootSA.ID, pr.ID); err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
@@ -502,7 +502,7 @@ func TestPermissionsRequestsDeny(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
 	}
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	if err := prsUC.Deny(rootSA.ID, pr.ID); err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
@@ -584,7 +584,7 @@ func TestPermissionsRequestsGrantWhenPRIsNotOpen(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
 	}
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	if err := prsUC.Deny(rootSA.ID, pr.ID); err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
@@ -628,7 +628,7 @@ func TestPermissionsRequestsDenyWhenPRIsNotOpen(t *testing.T) {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return
 	}
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	if err := prsUC.Deny(rootSA.ID, pr.ID); err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 		return

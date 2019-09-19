@@ -26,7 +26,7 @@ func beforeEachPermissionsHandlers(t *testing.T) {
 
 func TestPermissionsDeleteHandlerNonExistentID(t *testing.T) {
 	beforeEachRolesHandlers(t)
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	app := helpers.GetApp(t)
 	req, _ := http.NewRequest("DELETE", fmt.Sprintf(
 		"/permissions/%s", uuid.Must(uuid.NewV4()).String(),
@@ -43,7 +43,7 @@ func TestPermissionsDeleteHandlerNonExistentID(t *testing.T) {
 func TestPermissionsDeleteHandlerNonRootSA(t *testing.T) {
 	beforeEachRolesHandlers(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	sa, err := saUC.CreateKeyPairType("some sa")
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())
@@ -86,7 +86,7 @@ func TestPermissionsDeleteHandlerNonRootSA(t *testing.T) {
 func TestPermissionsDeleteHandler(t *testing.T) {
 	beforeEachRolesHandlers(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	sa, err := saUC.CreateKeyPairType("some sa")
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())

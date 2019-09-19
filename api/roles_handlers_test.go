@@ -28,7 +28,7 @@ func beforeEachRolesHandlers(t *testing.T) {
 
 func TestRolesCreatePermissionHandler(t *testing.T) {
 	beforeEachRolesHandlers(t)
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
 	sa, err := saUC.CreateKeyPairType("some sa")
 	if err != nil {
@@ -94,7 +94,7 @@ func TestRolesCreatePermissionHandlerNonRootSA(t *testing.T) {
 func TestRolesUpdateHandlerRootSA(t *testing.T) {
 	beforeEachRolesHandlers(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	targetSA, err := saUC.CreateKeyPairType("creator sa")
 	if err != nil {
 		t.Errorf("Unexpected error %s", err.Error())

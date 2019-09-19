@@ -24,7 +24,7 @@ func beforeEachServices(t *testing.T) {
 
 func TestServicesCreateHandler(t *testing.T) {
 	beforeEachServices(t)
-	rootSA := helpers.CreateRootServiceAccount(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	saUC := helpers.GetServiceAccountsUseCase(t)
 	sa := &models.ServiceAccount{
 		Name:  "any",

@@ -6,7 +6,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/gofrs/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"github.com/topfreegames/Will.IAM/api"
@@ -101,15 +103,44 @@ func GetPermissionsRequestsUseCase(t *testing.T) usecases.PermissionsRequests {
 	return usecases.NewPermissionsRequests(GetRepo(t)).WithContext(context.Background())
 }
 
-// CreateRootServiceAccount creates a root service account with root access
-func CreateRootServiceAccount(t *testing.T) *models.ServiceAccount {
-	return CreateServiceAccountWithPermissions(t, "root", "*::RO::*::*")
+// CreateRootServiceAccountWithKeyPair creates a root service account with root access using KeyPair
+func CreateRootServiceAccountWithKeyPair(t *testing.T) *models.ServiceAccount {
+	t.Helper()
+	return CreateServiceAccountWithPermissions(t, "root", "root@test.com", "KeyPair", "*::RO::*::*")
+}
+
+// CreateRootServiceAccountWithOAuth creates a root service account with root access using OAuth
+func CreateRootServiceAccountWithOAuth(t *testing.T) *models.ServiceAccount {
+	t.Helper()
+
+	serviceAccount := CreateServiceAccountWithPermissions(t, "root", "root@test.com", "OAuth", "*::RO::*::*")
+	token := &models.Token{
+		AccessToken:  uuid.Must(uuid.NewV4()).String(),
+		RefreshToken: uuid.Must(uuid.NewV4()).String(),
+		TokenType:    uuid.Must(uuid.NewV4()).String(),
+		Expiry:       time.Now().Add(time.Hour * 24 * 10),
+		Email:        serviceAccount.Email,
+	}
+
+	repo := GetRepo(t)
+	repo.Tokens.Save(token)
+
+	return serviceAccount
 }
 
 // CreateServiceAccountWithPermissions create an account with a list of permissions
-func CreateServiceAccountWithPermissions(t *testing.T, name string, permissions ...string) *models.ServiceAccount {
+func CreateServiceAccountWithPermissions(t *testing.T, name string, email string, method string, permissions ...string) *models.ServiceAccount {
 	saUC := GetServiceAccountsUseCase(t)
-	rootSA, err := saUC.CreateKeyPairType(name)
+
+	var rootSA *models.ServiceAccount
+	var err error
+
+	if method == "KeyPair" {
+		rootSA, err = saUC.CreateKeyPairType(name)
+	} else if method == "OAuth" {
+		rootSA, err = saUC.CreateOAuth2Type(name, email)
+	}
+
 	if err != nil {
 		panic(err)
 	}

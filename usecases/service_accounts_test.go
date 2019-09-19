@@ -254,7 +254,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 	for i, tt := range saListWithPermissionTestCases {
 		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
-		root := helpers.CreateRootServiceAccount(t)
+		root := helpers.CreateRootServiceAccountWithKeyPair(t)
 		sas := []*usecases.ServiceAccountWithNested{}
 		for j, psStr := range tt.sasPs {
 			ps, err := models.BuildPermissions(psStr)
@@ -305,7 +305,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 	for i, tt := range saListWithPermissionTestCases {
 		helpers.CleanupPG(t)
 		saUC := helpers.GetServiceAccountsUseCase(t)
-		root := helpers.CreateRootServiceAccount(t)
+		root := helpers.CreateRootServiceAccountWithKeyPair(t)
 		sas := []*models.ServiceAccount{}
 		for j, psStr := range tt.sasPs {
 			sa := &models.ServiceAccount{
