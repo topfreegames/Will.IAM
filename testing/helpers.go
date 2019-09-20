@@ -106,18 +106,18 @@ func GetPermissionsRequestsUseCase(t *testing.T) usecases.PermissionsRequests {
 // CreateRootServiceAccountWithKeyPair creates a root service account with root access using KeyPair
 func CreateRootServiceAccountWithKeyPair(t *testing.T) *models.ServiceAccount {
 	t.Helper()
-	return CreateServiceAccountWithPermissions(t, "root", "root@test.com", "KeyPair", "*::RO::*::*")
+	return CreateServiceAccountWithPermissions(t, "root", "root@test.com", models.AuthenticationTypes.KeyPair, "*::RO::*::*")
 }
 
 // CreateRootServiceAccountWithOAuth creates a root service account with root access using OAuth
 func CreateRootServiceAccountWithOAuth(t *testing.T) *models.ServiceAccount {
 	t.Helper()
 
-	serviceAccount := CreateServiceAccountWithPermissions(t, "root", "root@test.com", "OAuth", "*::RO::*::*")
+	serviceAccount := CreateServiceAccountWithPermissions(t, "root", "root@test.com", models.AuthenticationTypes.OAuth2, "*::RO::*::*")
 	token := &models.Token{
 		AccessToken:  uuid.Must(uuid.NewV4()).String(),
 		RefreshToken: uuid.Must(uuid.NewV4()).String(),
-		TokenType:    uuid.Must(uuid.NewV4()).String(),
+		TokenType:    "Bearer",
 		Expiry:       time.Now().Add(time.Hour * 24 * 10),
 		Email:        serviceAccount.Email,
 	}
@@ -129,15 +129,15 @@ func CreateRootServiceAccountWithOAuth(t *testing.T) *models.ServiceAccount {
 }
 
 // CreateServiceAccountWithPermissions create an account with a list of permissions
-func CreateServiceAccountWithPermissions(t *testing.T, name string, email string, method string, permissions ...string) *models.ServiceAccount {
+func CreateServiceAccountWithPermissions(t *testing.T, name string, email string, method models.AuthenticationType, permissions ...string) *models.ServiceAccount {
 	saUC := GetServiceAccountsUseCase(t)
 
 	var rootSA *models.ServiceAccount
 	var err error
 
-	if method == "KeyPair" {
+	if method == models.AuthenticationTypes.KeyPair {
 		rootSA, err = saUC.CreateKeyPairType(name)
-	} else if method == "OAuth" {
+	} else if method == models.AuthenticationTypes.OAuth2 {
 		rootSA, err = saUC.CreateOAuth2Type(name, email)
 	}
 
@@ -158,6 +158,7 @@ func CreateServiceAccountWithPermissions(t *testing.T, name string, email string
 	return rootSA
 }
 
+// CleanupPG clears the databse data between tests
 func CleanupPG(t *testing.T) {
 	t.Helper()
 	storage := GetStorage(t)

@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/topfreegames/Will.IAM/models"
+
 	helpers "github.com/topfreegames/Will.IAM/testing"
 )
 
@@ -184,8 +186,14 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 		beforeEachServiceAccountsHandlers(t)
 		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 
-		for i, p := range tt.sasPs {
-			helpers.CreateServiceAccountWithPermissions(t, fmt.Sprintf("sa%d", i), fmt.Sprintf("sa%d@email.com", i), "OAuth", p)
+		for i, permission := range tt.sasPs {
+			helpers.CreateServiceAccountWithPermissions(
+				t,
+				fmt.Sprintf("sa%d", i),
+				fmt.Sprintf("sa%d@email.com", i),
+				models.AuthenticationTypes.OAuth2,
+				permission,
+			)
 		}
 
 		params := url.Values{}

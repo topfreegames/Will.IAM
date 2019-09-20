@@ -7,6 +7,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/topfreegames/Will.IAM/errors"
+	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/usecases"
 	"github.com/topfreegames/extensions/middleware"
 )
@@ -19,7 +20,7 @@ const bearerTokenHeader = "Bearer"
 
 type authorizationHeader struct {
 	Header  string
-	Type    string
+	Type    models.AuthenticationType
 	Content string
 }
 
@@ -51,7 +52,7 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 
 			if authHeader.isKeyPair() {
 				ctx, err = handleKeyPairAuthorization(request, responseWriter, authHeader, sasUC, logger)
-			} else if authHeader.isBearerToken() {
+			} else if authHeader.isOAuth2() {
 				ctx, err = handleBearerTokenAuthorization(request, responseWriter, authHeader, sasUC, logger)
 			} else {
 				handleUndefinedAuthorizationType(responseWriter, logger)
@@ -68,9 +69,19 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 }
 
 func buildAuth(header string, method string, content string) authorizationHeader {
+	var authType models.AuthenticationType
+
+	if strings.EqualFold(method, keyPairHeader) {
+		authType = models.AuthenticationTypes.KeyPair
+	} else if strings.EqualFold(method, bearerTokenHeader) {
+		authType = models.AuthenticationTypes.OAuth2
+	} else {
+		authType = ""
+	}
+
 	return authorizationHeader{
 		Header:  header,
-		Type:    method,
+		Type:    authType,
 		Content: content,
 	}
 }
@@ -83,11 +94,11 @@ func (auth authorizationHeader) isValid() bool {
 }
 
 func (auth authorizationHeader) isKeyPair() bool {
-	return strings.EqualFold(auth.Type, keyPairHeader)
+	return strings.EqualFold(auth.Type.String(), models.AuthenticationTypes.KeyPair.String())
 }
 
-func (auth authorizationHeader) isBearerToken() bool {
-	return strings.EqualFold(auth.Type, bearerTokenHeader)
+func (auth authorizationHeader) isOAuth2() bool {
+	return strings.EqualFold(auth.Type.String(), models.AuthenticationTypes.OAuth2.String())
 }
 
 func handleKeyPairAuthorization(

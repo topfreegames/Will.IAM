@@ -27,9 +27,13 @@ var AuthenticationTypes = struct {
 	KeyPair: "keypair",
 }
 
+func (authType AuthenticationType) String() string {
+	return string(authType)
+}
+
 // Valid checks if at is a possible value
-func (at AuthenticationType) Valid() bool {
-	if string(at) == "oauth2" || string(at) == "keypair" {
+func (authType AuthenticationType) Valid() bool {
+	if authType.String() == AuthenticationTypes.OAuth2.String() || authType.String() == AuthenticationTypes.KeyPair.String() {
 		return true
 	}
 	return false
