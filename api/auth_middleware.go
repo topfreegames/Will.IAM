@@ -51,11 +51,11 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 			logger := middleware.GetLogger(request.Context())
 
 			if authHeader.isKeyPair() {
-				ctx, err = handleKeyPairAuthorization(request, responseWriter, authHeader, sasUC, logger)
+				ctx, err = handleKeyPairAuth(request, responseWriter, authHeader, sasUC, logger)
 			} else if authHeader.isOAuth2() {
-				ctx, err = handleBearerTokenAuthorization(request, responseWriter, authHeader, sasUC, logger)
+				ctx, err = handleOAuth2TokenAuth(request, responseWriter, authHeader, sasUC, logger)
 			} else {
-				handleUndefinedAuthorizationType(responseWriter, logger)
+				handleUndefinedAuthType(responseWriter, logger)
 				return
 			}
 
@@ -101,7 +101,7 @@ func (auth authorizationHeader) isOAuth2() bool {
 	return strings.EqualFold(auth.Type.String(), models.AuthenticationTypes.OAuth2.String())
 }
 
-func handleKeyPairAuthorization(
+func handleKeyPairAuth(
 	request *http.Request,
 	responseWriter http.ResponseWriter,
 	authHeader authorizationHeader,
@@ -124,7 +124,7 @@ func handleKeyPairAuthorization(
 	return ctx, nil
 }
 
-func handleBearerTokenAuthorization(
+func handleOAuth2TokenAuth(
 	request *http.Request,
 	responseWriter http.ResponseWriter,
 	authHeader authorizationHeader,
@@ -158,7 +158,7 @@ func handleBearerTokenAuthorization(
 	return ctx, nil
 }
 
-func handleUndefinedAuthorizationType(
+func handleUndefinedAuthType(
 	responseWriter http.ResponseWriter,
 	logger logrus.FieldLogger,
 ) {
