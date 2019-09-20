@@ -49,11 +49,12 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 			var err error
 			logger := middleware.GetLogger(r.Context())
 
-			if authHeader.isKeyPair() {
+			switch authHeader.Type {
+			case models.AuthenticationTypes.KeyPair:
 				ctx, err = handleKeyPairAuth(r, w, authHeader, sasUC)
-			} else if authHeader.isOAuth2() {
+			case models.AuthenticationTypes.OAuth2:
 				ctx, err = handleOAuth2TokenAuth(r, w, authHeader, sasUC)
-			} else {
+			default:
 				handleUndefinedAuthType(w, logger)
 				return
 			}
@@ -91,14 +92,6 @@ func (auth authorizationHeader) isValid() bool {
 		return false
 	}
 	return true
-}
-
-func (auth authorizationHeader) isKeyPair() bool {
-	return strings.EqualFold(auth.Type.String(), models.AuthenticationTypes.KeyPair.String())
-}
-
-func (auth authorizationHeader) isOAuth2() bool {
-	return strings.EqualFold(auth.Type.String(), models.AuthenticationTypes.OAuth2.String())
 }
 
 func handleKeyPairAuth(
