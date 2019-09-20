@@ -36,39 +36,39 @@ func getServiceAccountID(ctx context.Context) (string, bool) {
 // authMiddleware authenticates either access_token or key pair
 func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(responseWriter http.ResponseWriter, request *http.Request) {
-			header := request.Header.Get("authorization")
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			header := r.Header.Get("authorization")
 			authHeaderContents := strings.Split(header, " ")
 			authHeader := buildAuth(header, authHeaderContents[0], authHeaderContents[1])
-
 			if !authHeader.isValid() {
-				responseWriter.WriteHeader(http.StatusUnauthorized)
+				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 
 			var ctx context.Context
 			var err error
-			logger := middleware.GetLogger(request.Context())
+			logger := middleware.GetLogger(r.Context())
 
 			if authHeader.isKeyPair() {
-				ctx, err = handleKeyPairAuth(request, responseWriter, authHeader, sasUC, logger)
+				ctx, err = handleKeyPairAuth(r, w, authHeader, sasUC)
 			} else if authHeader.isOAuth2() {
-				ctx, err = handleOAuth2TokenAuth(request, responseWriter, authHeader, sasUC, logger)
+				ctx, err = handleOAuth2TokenAuth(r, w, authHeader, sasUC)
 			} else {
-				handleUndefinedAuthType(responseWriter, logger)
+				handleUndefinedAuthType(w, logger)
 				return
 			}
 
 			if err != nil {
+				logger.WithError(err).Error("auth failed")
 				return
 			}
 
-			next.ServeHTTP(responseWriter, request.WithContext(ctx))
+			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-func buildAuth(header string, method string, content string) authorizationHeader {
+func buildAuth(header, method, content string) authorizationHeader {
 	var authType models.AuthenticationType
 
 	if strings.EqualFold(method, keyPairHeader) {
@@ -102,67 +102,59 @@ func (auth authorizationHeader) isOAuth2() bool {
 }
 
 func handleKeyPairAuth(
-	request *http.Request,
-	responseWriter http.ResponseWriter,
+	r *http.Request,
+	w http.ResponseWriter,
 	authHeader authorizationHeader,
 	sasUC usecases.ServiceAccounts,
-	logger logrus.FieldLogger,
 ) (context.Context, error) {
-
 	keyPair := strings.Split(authHeader.Content, ":")
-	accessKeyPairAuth, err := sasUC.WithContext(request.Context()).AuthenticateKeyPair(keyPair[0], keyPair[1])
+	accessKeyPairAuth, err := sasUC.WithContext(r.Context()).AuthenticateKeyPair(keyPair[0], keyPair[1])
 
 	if err != nil {
-		logger.WithError(err).Error("auth failed")
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return nil, err
 	}
 
-	responseWriter.Header().Set("x-service-account-name", accessKeyPairAuth.Name)
+	w.Header().Set("x-service-account-name", accessKeyPairAuth.Name)
+	ctx := context.WithValue(r.Context(), serviceAccountIDCtxKey, accessKeyPairAuth.ServiceAccountID)
 
-	ctx := context.WithValue(request.Context(), serviceAccountIDCtxKey, accessKeyPairAuth.ServiceAccountID)
 	return ctx, nil
 }
 
 func handleOAuth2TokenAuth(
-	request *http.Request,
-	responseWriter http.ResponseWriter,
+	r *http.Request,
+	w http.ResponseWriter,
 	authHeader authorizationHeader,
 	sasUC usecases.ServiceAccounts,
-	logger logrus.FieldLogger,
 ) (context.Context, error) {
-
 	accessToken := authHeader.Content
-	accessTokenAuth, err := sasUC.WithContext(request.Context()).AuthenticateAccessToken(accessToken)
+	accessTokenAuth, err := sasUC.WithContext(r.Context()).AuthenticateAccessToken(accessToken)
 
 	if err != nil {
-		logger.WithError(err).Info("auth failed")
-
 		if _, ok := err.(*errors.EntityNotFoundError); ok {
-			responseWriter.WriteHeader(http.StatusUnauthorized)
+			w.WriteHeader(http.StatusUnauthorized)
 			return nil, err
 		}
 
-		logger.Error(err)
-		responseWriter.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return nil, err
 	}
 
-	responseWriter.Header().Set("x-email", accessTokenAuth.Email)
+	w.Header().Set("x-email", accessTokenAuth.Email)
 
 	if accessTokenAuth.AccessToken != accessToken {
-		responseWriter.Header().Set("x-access-token", accessTokenAuth.AccessToken)
+		w.Header().Set("x-access-token", accessTokenAuth.AccessToken)
 	}
 
-	ctx := context.WithValue(request.Context(), serviceAccountIDCtxKey, accessTokenAuth.ServiceAccountID)
+	ctx := context.WithValue(r.Context(), serviceAccountIDCtxKey, accessTokenAuth.ServiceAccountID)
 	return ctx, nil
 }
 
 func handleUndefinedAuthType(
-	responseWriter http.ResponseWriter,
+	w http.ResponseWriter,
 	logger logrus.FieldLogger,
 ) {
 	logger.WithError(errors.NewInvalidAuthorizationTypeError()).Error("auth failed")
-	responseWriter.WriteHeader(http.StatusUnauthorized)
+	w.WriteHeader(http.StatusUnauthorized)
 	return
 }

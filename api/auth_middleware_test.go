@@ -13,7 +13,11 @@ func TestAuthMiddlewareKeyPairShouldAuthenticateUser(t *testing.T) {
 
 	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	app := helpers.GetApp(t)
-	req, _ := http.NewRequest(http.MethodGet, "/service_accounts", nil)
+	req, err := http.NewRequest(http.MethodGet, "/service_accounts", nil)
+
+	if err != nil {
+		t.Errorf("Could not create HTTP request for /service_accounts")
+	}
 
 	req.Header.Set("Authorization", fmt.Sprintf(
 		"keypair %s:%s", rootSA.KeyID, rootSA.KeySecret,
@@ -39,7 +43,11 @@ func TestAuthMiddlewareBearerShouldAuthenticateUser(t *testing.T) {
 	tokens, _ := tokensRepo.FindByEmail(rootSA.Email)
 	token := tokens[0]
 	app := helpers.GetApp(t)
-	req, _ := http.NewRequest(http.MethodGet, "/service_accounts", nil)
+	req, err := http.NewRequest(http.MethodGet, "/service_accounts", nil)
+
+	if err != nil {
+		t.Errorf("Could not create HTTP request for /service_accounts")
+	}
 
 	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", token))
 	response := helpers.DoRequest(t, req, app.GetRouter())
