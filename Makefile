@@ -52,7 +52,7 @@ build-docker:
 	@docker build -t $(project) .
 
 run:
-	@reflex -c reflex.conf -- sh -c ./Will.IAM start-api
+	@reflex -c reflex.conf -- sh -c ./bin/Will.IAM start-api
 
 migrate:
 	@migrate -path migrations -database ${database} up
