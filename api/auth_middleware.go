@@ -76,7 +76,7 @@ func buildAuth(header, method, content string) authorizationHeader {
 	} else if strings.EqualFold(method, bearerTokenHeader) {
 		authType = models.AuthenticationTypes.OAuth2
 	} else {
-		authType = ""
+		authType = models.AuthenticationTypes.Unknown
 	}
 
 	return authorizationHeader{

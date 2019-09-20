@@ -22,9 +22,11 @@ type AuthenticationType string
 var AuthenticationTypes = struct {
 	OAuth2  AuthenticationType
 	KeyPair AuthenticationType
+	Unknown AuthenticationType
 }{
 	OAuth2:  "oauth2",
 	KeyPair: "keypair",
+	Unknown: "unknown",
 }
 
 func (authType AuthenticationType) String() string {
