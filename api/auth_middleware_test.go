@@ -16,7 +16,7 @@ func TestAuthMiddlewareKeyPairShouldAuthenticateUser(t *testing.T) {
 	req, _ := http.NewRequest(http.MethodGet, "/service_accounts", nil)
 
 	req.Header.Set("Authorization", fmt.Sprintf(
-		"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
+		"keypair %s:%s", rootSA.KeyID, rootSA.KeySecret,
 	))
 
 	response := helpers.DoRequest(t, req, app.GetRouter())
@@ -41,7 +41,7 @@ func TestAuthMiddlewareBearerShouldAuthenticateUser(t *testing.T) {
 	app := helpers.GetApp(t)
 	req, _ := http.NewRequest(http.MethodGet, "/service_accounts", nil)
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", token))
 	response := helpers.DoRequest(t, req, app.GetRouter())
 
 	if response.Code != http.StatusOK {
