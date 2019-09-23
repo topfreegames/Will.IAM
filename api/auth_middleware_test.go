@@ -8,24 +8,56 @@ import (
 	helpers "github.com/topfreegames/Will.IAM/testing"
 )
 
-func TestAuthMiddlewareKeyPair(t *testing.T) {
+func TestAuthMiddlewareKeyPairShouldAuthenticateUser(t *testing.T) {
 	helpers.CleanupPG(t)
 
-	rootSA := helpers.CreateRootServiceAccount(t)
-
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
 	app := helpers.GetApp(t)
+	req, err := http.NewRequest(http.MethodGet, "/service_accounts", nil)
 
-	req, _ := http.NewRequest(http.MethodGet, "/service_accounts", nil)
-	req.Header.Set("Authorization", fmt.Sprintf(
-		"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
-	))
-	rec := helpers.DoRequest(t, req, app.GetRouter())
-	if rec.Code != http.StatusOK {
-		t.Errorf("Expected status %d. Got %d", http.StatusOK, rec.Code)
+	if err != nil {
+		t.Errorf("Could not create HTTP request for /service_accounts")
 	}
 
-	serviceAccountName := rec.Header().Get("x-service-account-name")
+	req.Header.Set("Authorization", fmt.Sprintf(
+		"keypair %s:%s", rootSA.KeyID, rootSA.KeySecret,
+	))
+
+	response := helpers.DoRequest(t, req, app.GetRouter())
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected status %d. Got %d", http.StatusOK, response.Code)
+	}
+
+	serviceAccountName := response.Header().Get("x-service-account-name")
 	if serviceAccountName != "root" {
 		t.Errorf("Expected service account name %s. Got %s", "root", serviceAccountName)
+	}
+}
+
+func TestAuthMiddlewareBearerShouldAuthenticateUser(t *testing.T) {
+	helpers.CleanupPG(t)
+
+	rootSA := helpers.CreateRootServiceAccountWithOAuth(t)
+	tokensRepo := helpers.GetRepo(t).Tokens
+	tokens, _ := tokensRepo.FindByEmail(rootSA.Email)
+	token := tokens[0]
+	app := helpers.GetApp(t)
+	req, err := http.NewRequest(http.MethodGet, "/service_accounts", nil)
+
+	if err != nil {
+		t.Errorf("Could not create HTTP request for /service_accounts")
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("bearer %s", token))
+	response := helpers.DoRequest(t, req, app.GetRouter())
+
+	if response.Code != http.StatusOK {
+		t.Errorf("Expected status %d. Got %d", http.StatusOK, response.Code)
+	}
+
+	serviceAccountEmail := response.Header().Get("x-email")
+	if serviceAccountEmail != rootSA.Email {
+		t.Errorf("Expected service account email %s. Got %s", rootSA.Email, serviceAccountEmail)
 	}
 }

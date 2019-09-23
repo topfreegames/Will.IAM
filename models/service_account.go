@@ -22,14 +22,20 @@ type AuthenticationType string
 var AuthenticationTypes = struct {
 	OAuth2  AuthenticationType
 	KeyPair AuthenticationType
+	Unknown AuthenticationType
 }{
 	OAuth2:  "oauth2",
 	KeyPair: "keypair",
+	Unknown: "unknown",
+}
+
+func (authType AuthenticationType) String() string {
+	return string(authType)
 }
 
 // Valid checks if at is a possible value
-func (at AuthenticationType) Valid() bool {
-	if string(at) == "oauth2" || string(at) == "keypair" {
+func (authType AuthenticationType) Valid() bool {
+	if authType.String() == AuthenticationTypes.OAuth2.String() || authType.String() == AuthenticationTypes.KeyPair.String() {
 		return true
 	}
 	return false

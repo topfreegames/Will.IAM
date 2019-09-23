@@ -11,6 +11,7 @@ type Tokens interface {
 	Save(*models.Token) error
 	Clone() Tokens
 	setStorage(*Storage)
+	FindByEmail(string) ([]models.Token, error)
 }
 
 type tokens struct {
@@ -43,6 +44,16 @@ func (ts tokens) Save(token *models.Token) error {
 	?expiry, ?email, now()) ON CONFLICT (access_token) DO UPDATE SET
 	expired_at = ?expired_at, updated_at = now()`, token)
 	return err
+}
+
+func (ts tokens) FindByEmail(email string) ([]models.Token, error) {
+	tokens := []models.Token{}
+	if _, err := ts.storage.PG.DB.Query(
+		&tokens, `SELECT * FROM tokens WHERE email = ?`, email,
+	); err != nil {
+		return nil, err
+	}
+	return tokens, nil
 }
 
 // NewTokens ctor

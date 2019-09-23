@@ -39,7 +39,7 @@ func (p *ProviderBlankMock) ExchangeCode(any string) (*models.AuthResult, error)
 
 // Authenticate dummy
 func (p *ProviderBlankMock) Authenticate(any string) (*models.AuthResult, error) {
-	email := "any@email.com"
+	email := "root@test.com"
 	if p.Email != "" {
 		email = p.Email
 	}
