@@ -171,7 +171,8 @@ func permissionsHasHandler(
 			sasUC.WithContext(r.Context()).HasPermissionString(saID, permissionSl[0])
 		if err != nil {
 			l.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			Write(w, http.StatusUnprocessableEntity,
+				`{"error": "Incomplete permission. Expected format: Service::OwnershipLevel::Action::{ResourceHierarchy}"}`)
 			return
 		}
 		if !has {
