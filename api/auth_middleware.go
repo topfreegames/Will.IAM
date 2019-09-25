@@ -44,21 +44,20 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 				return
 			}
 
-			var errr error
 			var ctx context.Context
 
 			switch authHeader.Type {
 			case models.AuthenticationTypes.KeyPair:
-				ctx, errr = handleKeyPairAuth(r, w, authHeader, sasUC)
+				ctx, err = handleKeyPairAuth(r, w, authHeader, sasUC)
 			case models.AuthenticationTypes.OAuth2:
-				ctx, errr = handleOAuth2TokenAuth(r, w, authHeader, sasUC)
+				ctx, err = handleOAuth2TokenAuth(r, w, authHeader, sasUC)
 			default:
 				handleInvalidAuth(w, logger)
 				return
 			}
 
-			if errr != nil {
-				logger.WithError(errr).Error("auth failed")
+			if err != nil {
+				logger.WithError(err).Error("auth failed")
 				return
 			}
 
