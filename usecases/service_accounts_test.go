@@ -242,7 +242,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RL::Do1::x::z"},
 		},
 		test:     "Service1::RL::Do1::x::z",
-		expected: []string{"sa0", "sa2", "user"},
+		expected: []string{"rootSAKeyPair", "sa0", "sa2"},
 	},
 	saListWithPermissionTestCase{
 		name: "Scenario 2",
@@ -252,7 +252,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RO::Do1::x::z"},
 		},
 		test:     "Service1::RO::Do1::x::z",
-		expected: []string{"sa2", "user"},
+		expected: []string{"rootSAKeyPair", "sa2"},
 	},
 	saListWithPermissionTestCase{
 		name: "Scenario 3",
@@ -262,7 +262,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RO::Do1::x::z"},
 		},
 		test:     "Service2::RO::Do1::x::z",
-		expected: []string{"user"},
+		expected: []string{"rootSAKeyPair"},
 	},
 	saListWithPermissionTestCase{
 		name: "Scenario 4",
@@ -272,7 +272,7 @@ var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 			[]string{"Service1::RO::*::x::z"},
 		},
 		test:     "Service1::RO::Do1::x::z",
-		expected: []string{"sa2", "user"},
+		expected: []string{"rootSAKeyPair", "sa2"},
 	},
 }
 
@@ -282,7 +282,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 			helpers.CleanupPG(t)
 
 			saUC := helpers.GetServiceAccountsUseCase(t)
-			root := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
+			root := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 			sas := []*usecases.ServiceAccountWithNested{}
 			for j, psStr := range testCase.sasPs {
 				ps, err := models.BuildPermissions(psStr)
@@ -336,7 +336,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 			helpers.CleanupPG(t)
 
 			saUC := helpers.GetServiceAccountsUseCase(t)
-			root := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
+			root := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 			sas := []*models.ServiceAccount{}
 
 			for j, psStr := range testCase.sasPs {

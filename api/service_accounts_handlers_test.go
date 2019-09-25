@@ -71,7 +71,7 @@ func TestServiceAccountCreateHandler(t *testing.T) {
 	app := helpers.GetApp(t)
 	for _, tt := range tt {
 		beforeEachServiceAccountsHandlers(t)
-		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
+		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 		bts, err := json.Marshal(tt.body)
 		if err != nil {
 			t.Errorf("Unexpected error %s", err.Error())
@@ -91,7 +91,7 @@ func TestServiceAccountCreateHandler(t *testing.T) {
 func TestServiceAccountListHandler(t *testing.T) {
 	beforeEachServiceAccountsHandlers(t)
 
-	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 
 	app := helpers.GetApp(t)
 
@@ -124,8 +124,8 @@ func TestServiceAccountListHandler(t *testing.T) {
 		t.Fatalf("Expected result len %d. Got %d", 1, len(jsRet.Result))
 	}
 
-	if jsRet.Result[0].Name != "user" {
-		t.Errorf("Expected name %s. Got %s", "user", jsRet.Result[0].Name)
+	if jsRet.Result[0].Name != "rootSAKeyPair" {
+		t.Errorf("Expected name %s. Got %s", "rootSAKeyPair", jsRet.Result[0].Name)
 	}
 
 	if jsRet.Result[0].ID != rootSA.ID {
@@ -153,7 +153,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RL::Do1::x::z",
 			},
 			test:     "Service1::RL::Do1::x::z",
-			expected: []string{"user", "user0", "user2"},
+			expected: []string{"rootSAKeyPair", "sa0", "sa2"},
 		},
 		{
 			name: "Scenario 2",
@@ -163,7 +163,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RO::Do1::x::z",
 			},
 			test:     "Service1::RO::Do1::x::z",
-			expected: []string{"user", "user2"},
+			expected: []string{"rootSAKeyPair", "sa2"},
 		},
 		{
 			name: "Scenario 3",
@@ -173,7 +173,7 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RO::Do1::x::z",
 			},
 			test:     "Service2::RO::Do1::x::z",
-			expected: []string{"user"},
+			expected: []string{"rootSAKeyPair"},
 		},
 		{
 			name: "Scenario 4",
@@ -183,20 +183,20 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 				"Service1::RO::*::x::z",
 			},
 			test:     "Service1::RO::Do1::x::z",
-			expected: []string{"user", "user2"},
+			expected: []string{"rootSAKeyPair", "sa2"},
 		},
 	}
 
 	for _, testCase := range saListWithPermissionTestCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			beforeEachServiceAccountsHandlers(t)
-			rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
+			rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 
 			for i, permission := range testCase.sasPs {
 				helpers.CreateServiceAccountWithPermissions(
 					t,
-					fmt.Sprintf("user%d", i),
-					fmt.Sprintf("user%d@email.com", i),
+					fmt.Sprintf("sa%d", i),
+					fmt.Sprintf("sa%d@email.com", i),
 					models.AuthenticationTypes.OAuth2,
 					permission,
 				)
