@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/topfreegames/Will.IAM/models"
+	"github.com/topfreegames/Will.IAM/repositories"
 )
 
 // Provider is the contract any OAuth2 implementation must follow
@@ -17,6 +18,7 @@ type Provider interface {
 // ProviderBlankMock is a Provider mock will all dummy implementations
 type ProviderBlankMock struct {
 	Email string
+	repo  *repositories.All
 }
 
 // NewProviderBlankMock ctor
@@ -38,14 +40,13 @@ func (p *ProviderBlankMock) ExchangeCode(any string) (*models.AuthResult, error)
 }
 
 // Authenticate dummy
-func (p *ProviderBlankMock) Authenticate(any string) (*models.AuthResult, error) {
-	email := "root@test.com"
-	if p.Email != "" {
-		email = p.Email
-	}
+func (p *ProviderBlankMock) Authenticate(accessToken string) (*models.AuthResult, error) {
+	tokensRepo := p.repo.Tokens
+	token, _ := tokensRepo.Get(accessToken)
+
 	return &models.AuthResult{
-		AccessToken: any,
-		Email:       email,
+		AccessToken: token.AccessToken,
+		Email:       token.Email,
 	}, nil
 }
 

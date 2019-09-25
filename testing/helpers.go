@@ -42,7 +42,6 @@ func GetLogger(t *testing.T) logrus.FieldLogger {
 // GetApp is a helper to create an *api.App
 func GetApp(t *testing.T) *api.App {
 	app, err := api.NewApp("0.0.0.0", 4040, GetConfig(t), GetLogger(t), nil)
-	app.SetOAuth2Provider(oauth2.NewProviderBlankMock())
 	if err != nil {
 		t.Fatal(err)
 		return nil
@@ -104,16 +103,16 @@ func GetPermissionsRequestsUseCase(t *testing.T) usecases.PermissionsRequests {
 }
 
 // CreateRootServiceAccountWithKeyPair creates a root service account with root access using KeyPair
-func CreateRootServiceAccountWithKeyPair(t *testing.T) *models.ServiceAccount {
+func CreateRootServiceAccountWithKeyPair(t *testing.T, name, email string) *models.ServiceAccount {
 	t.Helper()
-	return CreateServiceAccountWithPermissions(t, "root", "root@test.com", models.AuthenticationTypes.KeyPair, "*::RO::*::*")
+	return CreateServiceAccountWithPermissions(t, name, email, models.AuthenticationTypes.KeyPair, "*::RO::*::*")
 }
 
 // CreateRootServiceAccountWithOAuth creates a root service account with root access using OAuth
-func CreateRootServiceAccountWithOAuth(t *testing.T) *models.ServiceAccount {
+func CreateRootServiceAccountWithOAuth(t *testing.T, name, email string) *models.ServiceAccount {
 	t.Helper()
 
-	serviceAccount := CreateServiceAccountWithPermissions(t, "root", "root@test.com", models.AuthenticationTypes.OAuth2, "*::RO::*::*")
+	serviceAccount := CreateServiceAccountWithPermissions(t, name, email, models.AuthenticationTypes.OAuth2, "*::RO::*::*")
 	token := &models.Token{
 		AccessToken:  uuid.Must(uuid.NewV4()).String(),
 		RefreshToken: uuid.Must(uuid.NewV4()).String(),

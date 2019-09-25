@@ -71,7 +71,7 @@ func TestServiceAccountCreateHandler(t *testing.T) {
 	app := helpers.GetApp(t)
 	for _, tt := range tt {
 		beforeEachServiceAccountsHandlers(t)
-		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
+		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
 		bts, err := json.Marshal(tt.body)
 		if err != nil {
 			t.Errorf("Unexpected error %s", err.Error())
@@ -91,7 +91,7 @@ func TestServiceAccountCreateHandler(t *testing.T) {
 func TestServiceAccountListHandler(t *testing.T) {
 	beforeEachServiceAccountsHandlers(t)
 
-	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
 
 	app := helpers.GetApp(t)
 
@@ -124,8 +124,8 @@ func TestServiceAccountListHandler(t *testing.T) {
 		t.Fatalf("Expected result len %d. Got %d", 1, len(jsRet.Result))
 	}
 
-	if jsRet.Result[0].Name != "root" {
-		t.Errorf("Expected name %s. Got %s", "root", jsRet.Result[0].Name)
+	if jsRet.Result[0].Name != "user" {
+		t.Errorf("Expected name %s. Got %s", "user", jsRet.Result[0].Name)
 	}
 
 	if jsRet.Result[0].ID != rootSA.ID {
@@ -140,98 +140,105 @@ func TestServiceAccountListWithPermissionHandler(t *testing.T) {
 	params.Set("permission", "SC::RL::Edit::*")
 
 	saListWithPermissionTestCases := []struct {
+		name     string
 		sasPs    []string
 		test     string
 		expected []string
 	}{
 		{
+			name: "Scenario 1",
 			sasPs: []string{
 				"Service1::RL::Do1::x::*",
 				"Service1::RL::Do1::x::y",
 				"Service1::RL::Do1::x::z",
 			},
 			test:     "Service1::RL::Do1::x::z",
-			expected: []string{"root", "sa0", "sa2"},
+			expected: []string{"user", "user0", "user2"},
 		},
 		{
+			name: "Scenario 2",
 			sasPs: []string{
 				"Service1::RL::Do1::x::*",
 				"Service1::RL::Do1::x::y",
 				"Service1::RO::Do1::x::z",
 			},
 			test:     "Service1::RO::Do1::x::z",
-			expected: []string{"root", "sa2"},
+			expected: []string{"user", "user2"},
 		},
 		{
+			name: "Scenario 3",
 			sasPs: []string{
 				"Service1::RL::Do1::x::*",
 				"Service1::RL::Do1::x::y",
 				"Service1::RO::Do1::x::z",
 			},
 			test:     "Service2::RO::Do1::x::z",
-			expected: []string{"root"},
+			expected: []string{"user"},
 		},
 		{
+			name: "Scenario 4",
 			sasPs: []string{
 				"Service1::RL::Do1::x::*",
 				"Service1::RL::Do1::x::y",
 				"Service1::RO::*::x::z",
 			},
 			test:     "Service1::RO::Do1::x::z",
-			expected: []string{"root", "sa2"},
+			expected: []string{"user", "user2"},
 		},
 	}
 
-	for caseID, tt := range saListWithPermissionTestCases {
-		beforeEachServiceAccountsHandlers(t)
-		rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
+	for _, testCase := range saListWithPermissionTestCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			beforeEachServiceAccountsHandlers(t)
+			rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "user", "user@test.com")
 
-		for i, permission := range tt.sasPs {
-			helpers.CreateServiceAccountWithPermissions(
-				t,
-				fmt.Sprintf("sa%d", i),
-				fmt.Sprintf("sa%d@email.com", i),
-				models.AuthenticationTypes.OAuth2,
-				permission,
-			)
-		}
-
-		params := url.Values{}
-		params.Set("permission", tt.test)
-
-		req, _ := http.NewRequest(http.MethodGet, "/service_accounts/with_permission?"+params.Encode(), nil)
-		req.Header.Set("Authorization", fmt.Sprintf(
-			"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
-		))
-		rec := helpers.DoRequest(t, req, app.GetRouter())
-		if rec.Code != http.StatusOK {
-			t.Errorf("Expected status %d. Got %d", http.StatusOK, rec.Code)
-		}
-
-		jsRet := struct {
-			Count  int64 `json:"count"`
-			Result []struct {
-				ID                 string `json:"id"`
-				AuthenticationType string `json:"authenticationType"`
-				Email              string `json:"email"`
-				Name               string `json:"name"`
-				Picture            string `json:"picture"`
-			} `json:"results"`
-		}{}
-
-		json.Unmarshal(rec.Body.Bytes(), &jsRet)
-		if int(jsRet.Count) != len(tt.expected) {
-			t.Errorf("Expected count %d. Got %d", len(tt.expected), jsRet.Count)
-		}
-
-		if len(jsRet.Result) != len(tt.expected) {
-			t.Fatalf("Expected result len %d. Got %d", len(tt.expected), len(jsRet.Result))
-		}
-
-		for i := range tt.expected {
-			if tt.expected[i] != jsRet.Result[i].Name {
-				t.Errorf("Expected list[%d] to be %s. Got %s. Case: %d", i, tt.expected[i], jsRet.Result[i].Name, caseID)
+			for i, permission := range testCase.sasPs {
+				helpers.CreateServiceAccountWithPermissions(
+					t,
+					fmt.Sprintf("user%d", i),
+					fmt.Sprintf("user%d@email.com", i),
+					models.AuthenticationTypes.OAuth2,
+					permission,
+				)
 			}
-		}
+
+			params := url.Values{}
+			params.Set("permission", testCase.test)
+
+			req, _ := http.NewRequest(http.MethodGet, "/service_accounts/with_permission?"+params.Encode(), nil)
+			req.Header.Set("Authorization", fmt.Sprintf(
+				"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
+			))
+			rec := helpers.DoRequest(t, req, app.GetRouter())
+			if rec.Code != http.StatusOK {
+				t.Errorf("Expected status %d. Got %d", http.StatusOK, rec.Code)
+			}
+
+			jsRet := struct {
+				Count  int64 `json:"count"`
+				Result []struct {
+					ID                 string `json:"id"`
+					AuthenticationType string `json:"authenticationType"`
+					Email              string `json:"email"`
+					Name               string `json:"name"`
+					Picture            string `json:"picture"`
+				} `json:"results"`
+			}{}
+
+			json.Unmarshal(rec.Body.Bytes(), &jsRet)
+			if int(jsRet.Count) != len(testCase.expected) {
+				t.Errorf("Expected count %d. Got %d", len(testCase.expected), jsRet.Count)
+			}
+
+			if len(jsRet.Result) != len(testCase.expected) {
+				t.Fatalf("Expected result len %d. Got %d", len(testCase.expected), len(jsRet.Result))
+			}
+
+			for i := range testCase.expected {
+				if testCase.expected[i] != jsRet.Result[i].Name {
+					t.Errorf("Expected list[%d] to be %s. Got %s.", i, testCase.expected[i], jsRet.Result[i].Name)
+				}
+			}
+		})
 	}
 }

@@ -26,7 +26,7 @@ func beforeEachAMHandlers(t *testing.T) {
 
 func TestAMListHandler(t *testing.T) {
 	beforeEachAMHandlers(t)
-	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "amUser", "am.user@test.com")
 	// saUC := helpers.GetServiceAccountsUseCase(t)
 	app := helpers.GetApp(t)
 	type testCase struct {
