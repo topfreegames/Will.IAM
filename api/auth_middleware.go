@@ -70,9 +70,9 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 func buildAuth(authHeader string) (authorizationHeader, error) {
 	authHeaderContents := strings.Split(authHeader, " ")
 
-	// A valid Authorization header can come in two forms, both having 3 elements:
-	// ["Authorization", "KeyPair", "<key_id>:<key_secret>"]
-	// ["Authorization", "Bearer", "<token>"]
+	// A valid Authorization header content can come in two forms, both having 2 elements:
+	// ["KeyPair", "<key_id>:<key_secret>"]
+	// ["Bearer", "<token>"]
 	if len(authHeaderContents) != 2 {
 		return authorizationHeader{}, errors.NewInvalidAuthorizationTypeError()
 	}
