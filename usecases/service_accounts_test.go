@@ -35,22 +35,18 @@ func TestServiceAccountsCreateShouldCreateRoleAndRoleBinding(t *testing.T) {
 		Email: "test@domain.com",
 	}
 	if err := saUC.Create(saM); err != nil {
-		t.Errorf("Unexpected error: %v", err)
-		return
+		t.Fatalf("Unexpected error: %v", err)
 	}
 	rs, err := saUC.GetRoles(saM.ID)
 	if err != nil {
-		t.Errorf("Unexpected error: %v", err)
-		return
+		t.Fatalf("Unexpected error: %v", err)
 	}
 	if len(rs) != 1 {
-		t.Errorf("Should have only 1 role binding. Found %d", len(rs))
-		return
+		t.Fatalf("Should have only 1 role binding. Found %d", len(rs))
 	}
 	rName := fmt.Sprintf("service-account:%s", saM.ID)
 	if rs[0].Name != rName {
-		t.Errorf("Expected role name to be %s. Got %s", rName, rs[0].Name)
-		return
+		t.Fatalf("Expected role name to be %s. Got %s", rName, rs[0].Name)
 	}
 }
 
@@ -160,8 +156,7 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
 			saUC := helpers.GetServiceAccountsUseCase(t)
 			sa1Ps, err := models.BuildPermissions(testCase.serviceAccountPermissions)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			sa1 := &usecases.ServiceAccountWithNested{
 				Name:               "sa1",
@@ -170,17 +165,14 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
 				AuthenticationType: models.AuthenticationTypes.OAuth2,
 			}
 			if err := saUC.CreateWithNested(sa1); err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			has, err := saUC.HasPermissionString(sa1.ID, testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			if has != testCase.expected {
-				t.Errorf("Expected has to be %v. Got %v", testCase.expected, has)
-				return
+				t.Fatalf("Expected has to be %v. Got %v", testCase.expected, has)
 			}
 		})
 	}
@@ -201,8 +193,7 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnNonBaseRole(t *testing.T) 
 			}
 			ps, err := models.BuildPermissions(testCase.serviceAccountPermissions)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			rl1 := &usecases.RoleWithNested{
 				Name:               "role1",
@@ -215,12 +206,10 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnNonBaseRole(t *testing.T) 
 			}
 			has, err := saUC.HasPermissionString(sa1.ID, testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			if has != testCase.expected {
-				t.Errorf("Expected has to be %v. Got %v", testCase.expected, has)
-				return
+				t.Fatalf("Expected has to be %v. Got %v", testCase.expected, has)
 			}
 		})
 	}
@@ -289,8 +278,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 			for j, psStr := range testCase.sasPs {
 				ps, err := models.BuildPermissions(psStr)
 				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-					return
+					t.Fatalf("Unexpected error: %v", err)
 				}
 				sa := &usecases.ServiceAccountWithNested{
 					Name:               fmt.Sprintf("sa%d", j),
@@ -299,29 +287,24 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 					AuthenticationType: models.AuthenticationTypes.OAuth2,
 				}
 				if err := saUC.CreateWithNested(sa); err != nil {
-					t.Errorf("Unexpected error: %v", err)
-					return
+					t.Fatalf("Unexpected error: %v", err)
 				}
 				sas = append(sas, sa)
 			}
 			ps, err := models.BuildPermission(testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
 			if count != int64(len(testCase.expected)) {
-				t.Errorf("Expected to have %d service accounts. Got %d", len(testCase.expected), count)
-				return
+				t.Fatalf("Expected to have %d service accounts. Got %d", len(testCase.expected), count)
 			}
 			if len(list) != len(testCase.expected) {
-				t.Errorf("Expected len(list) to be %d. Got %d", len(testCase.expected), len(list))
-				t.Errorf("List: %#v. Expected: %#v", list, testCase.expected)
-				return
+				t.Fatalf("Expected len(list) to be %d. Got %d", len(testCase.expected), len(list))
+				t.Fatalf("List: %#v. Expected: %#v", list, testCase.expected)
 			}
 			for j := range list {
 				if list[j].Name != testCase.expected[j] {
@@ -351,8 +334,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 				}
 				ps, err := models.BuildPermissions(psStr)
 				if err != nil {
-					t.Errorf("Unexpected error: %v", err)
-					return
+					t.Fatalf("Unexpected error: %v", err)
 				}
 				rl := &usecases.RoleWithNested{
 					Name:               fmt.Sprintf("roleSa%d", j),
@@ -367,22 +349,18 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 			}
 			ps, err := models.BuildPermission(testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %v.", err)
-				return
+				t.Fatalf("Unexpected error: %v.", err)
 			}
 			list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
 			if err != nil {
-				t.Errorf("Unexpected error: %v.", err)
-				return
+				t.Fatalf("Unexpected error: %v.", err)
 			}
 			if count != int64(len(testCase.expected)) {
-				t.Errorf("Expected to have %d service accounts. Got %d.", len(testCase.expected), count)
-				return
+				t.Fatalf("Expected to have %d service accounts. Got %d.", len(testCase.expected), count)
 			}
 			if len(list) != len(testCase.expected) {
-				t.Errorf("Expected len(list) to be %d. Got %d.", len(testCase.expected), len(list))
-				t.Errorf("List: %#v. Expected: %#v.", list, testCase.expected)
-				return
+				t.Fatalf("Expected len(list) to be %d. Got %d.", len(testCase.expected), len(list))
+				t.Fatalf("List: %#v. Expected: %#v.", list, testCase.expected)
 			}
 			for j := range list {
 				if list[j].Name != testCase.expected[j] {
