@@ -20,7 +20,7 @@ func TestServiceAccountsCreate(t *testing.T) {
 		Email: "test@domain.com",
 	}
 	if err := saUC.Create(saM); err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
+		t.Errorf("Unexpected error: %v", err)
 	}
 	if saM.ID == "" {
 		t.Errorf("Expected saM.ID to be non-empty")
@@ -35,12 +35,12 @@ func TestServiceAccountsCreateShouldCreateRoleAndRoleBinding(t *testing.T) {
 		Email: "test@domain.com",
 	}
 	if err := saUC.Create(saM); err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
+		t.Errorf("Unexpected error: %v", err)
 		return
 	}
 	rs, err := saUC.GetRoles(saM.ID)
 	if err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
+		t.Errorf("Unexpected error: %v", err)
 		return
 	}
 	if len(rs) != 1 {
@@ -160,7 +160,7 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
 			saUC := helpers.GetServiceAccountsUseCase(t)
 			sa1Ps, err := models.BuildPermissions(testCase.serviceAccountPermissions)
 			if err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 				return
 			}
 			sa1 := &usecases.ServiceAccountWithNested{
@@ -170,12 +170,12 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
 				AuthenticationType: models.AuthenticationTypes.OAuth2,
 			}
 			if err := saUC.CreateWithNested(sa1); err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 				return
 			}
 			has, err := saUC.HasPermissionString(sa1.ID, testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 				return
 			}
 			if has != testCase.expected {
@@ -197,11 +197,11 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnNonBaseRole(t *testing.T) 
 				Email: "test@domain.com",
 			}
 			if err := saUC.Create(sa1); err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 			}
 			ps, err := models.BuildPermissions(testCase.serviceAccountPermissions)
 			if err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 				return
 			}
 			rl1 := &usecases.RoleWithNested{
@@ -211,11 +211,11 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnNonBaseRole(t *testing.T) 
 			}
 			rsUC := helpers.GetRolesUseCase(t)
 			if err := rsUC.Create(rl1); err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 			}
 			has, err := saUC.HasPermissionString(sa1.ID, testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 				return
 			}
 			if has != testCase.expected {
@@ -289,7 +289,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 			for j, psStr := range testCase.sasPs {
 				ps, err := models.BuildPermissions(psStr)
 				if err != nil {
-					t.Errorf("Unexpected error: %s", err.Error())
+					t.Errorf("Unexpected error: %v", err)
 					return
 				}
 				sa := &usecases.ServiceAccountWithNested{
@@ -299,19 +299,19 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 					AuthenticationType: models.AuthenticationTypes.OAuth2,
 				}
 				if err := saUC.CreateWithNested(sa); err != nil {
-					t.Errorf("Unexpected error: %s", err.Error())
+					t.Errorf("Unexpected error: %v", err)
 					return
 				}
 				sas = append(sas, sa)
 			}
 			ps, err := models.BuildPermission(testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 				return
 			}
 			list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
 			if err != nil {
-				t.Errorf("Unexpected error: %s", err.Error())
+				t.Errorf("Unexpected error: %v", err)
 				return
 			}
 			if count != int64(len(testCase.expected)) {
@@ -347,11 +347,11 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 					Email: fmt.Sprintf("sa%d@domain.com", j),
 				}
 				if err := saUC.Create(sa); err != nil {
-					t.Errorf("Unexpected error: %s", err.Error())
+					t.Errorf("Unexpected error: %v", err)
 				}
 				ps, err := models.BuildPermissions(psStr)
 				if err != nil {
-					t.Errorf("Unexpected error: %s", err.Error())
+					t.Errorf("Unexpected error: %v", err)
 					return
 				}
 				rl := &usecases.RoleWithNested{
@@ -361,18 +361,18 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 				}
 				rsUC := helpers.GetRolesUseCase(t)
 				if err := rsUC.Create(rl); err != nil {
-					t.Errorf("Unexpected error: %s", err.Error())
+					t.Errorf("Unexpected error: %v", err)
 				}
 				sas = append(sas, sa)
 			}
 			ps, err := models.BuildPermission(testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %s.", err.Error())
+				t.Errorf("Unexpected error: %v.", err)
 				return
 			}
 			list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
 			if err != nil {
-				t.Errorf("Unexpected error: %s.", err.Error())
+				t.Errorf("Unexpected error: %v.", err)
 				return
 			}
 			if count != int64(len(testCase.expected)) {
