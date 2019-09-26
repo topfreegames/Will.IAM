@@ -1,7 +1,7 @@
 package api_test
 
 import (
-	b64 "encoding/base64"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"testing"
@@ -65,7 +65,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			testName:                "UnsupportedAuthorization",
 			serviceAccount:          oauthSA,
-			requestHeaders:          map[string]string{"authorization": fmt.Sprintf("basic %s", b64.StdEncoding.EncodeToString([]byte("user:password")))},
+			requestHeaders:          map[string]string{"authorization": fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte("user:password")))},
 			expectedResponseHeaders: emptyMap,
 			expectedResponseCode:    http.StatusUnauthorized,
 		},
