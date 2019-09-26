@@ -48,9 +48,9 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 
 			switch authHeader.Type {
 			case models.AuthenticationTypes.KeyPair:
-				ctx, err = handleKeyPairAuth(r, w, authHeader, sasUC)
+				ctx, err = handleKeyPairAuth(r, w, *authHeader, sasUC)
 			case models.AuthenticationTypes.OAuth2:
-				ctx, err = handleOAuth2TokenAuth(r, w, authHeader, sasUC)
+				ctx, err = handleOAuth2TokenAuth(r, w, *authHeader, sasUC)
 			default:
 				handleInvalidAuth(w, logger)
 				return
@@ -66,14 +66,14 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 	}
 }
 
-func buildAuth(authHeader string) (authorizationHeader, error) {
+func buildAuth(authHeader string) (*authorizationHeader, error) {
 	authHeaderContents := strings.Split(authHeader, " ")
 
 	// A valid Authorization header content can come in two forms, both having 2 elements:
 	// ["KeyPair", "<key_id>:<key_secret>"]
 	// ["Bearer", "<token>"]
 	if len(authHeaderContents) != 2 {
-		return authorizationHeader{}, errors.NewInvalidAuthorizationTypeError()
+		return nil, errors.NewInvalidAuthorizationTypeError()
 	}
 
 	method := authHeaderContents[0]
@@ -89,7 +89,7 @@ func buildAuth(authHeader string) (authorizationHeader, error) {
 		authType = models.AuthenticationTypes.Unknown
 	}
 
-	return authorizationHeader{
+	return &authorizationHeader{
 		Type:    authType,
 		Content: content,
 	}, nil
