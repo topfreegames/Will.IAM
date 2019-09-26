@@ -20,58 +20,57 @@ func TestAuthMiddleware(t *testing.T) {
 	token := tokens[0]
 
 	testCases := []struct {
-		testName                string
-		serviceAccount          *models.ServiceAccount
-		requestHeaders          map[string]string
-		expectedResponseHeaders map[string]string
-		expectedResponseCode    int
+		name                string
+		serviceAccount      *models.ServiceAccount
+		requestHeaders      map[string]string
+		wantResponseHeaders map[string]string
+		wantResponseCode    int
 	}{
 		{
-			testName:                "KeyPairAuthorization",
-			serviceAccount:          keyPairSA,
-			requestHeaders:          map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", keyPairSA.KeyID, keyPairSA.KeySecret)},
-			expectedResponseHeaders: map[string]string{"x-service-account-name": "keyPairUser"},
-			expectedResponseCode:    http.StatusOK,
+			name:                "KeyPairAuthorization",
+			serviceAccount:      keyPairSA,
+			requestHeaders:      map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", keyPairSA.KeyID, keyPairSA.KeySecret)},
+			wantResponseHeaders: map[string]string{"x-service-account-name": "keyPairUser"},
+			wantResponseCode:    http.StatusOK,
 		},
 		{
-			testName:                "OAuthAuthorization",
-			serviceAccount:          oauthSA,
-			requestHeaders:          map[string]string{"authorization": fmt.Sprintf("bearer %s", token.AccessToken)},
-			expectedResponseHeaders: map[string]string{"x-email": oauthSA.Email},
-			expectedResponseCode:    http.StatusOK,
+			name:                "OAuthAuthorization",
+			serviceAccount:      oauthSA,
+			requestHeaders:      map[string]string{"authorization": fmt.Sprintf("bearer %s", token.AccessToken)},
+			wantResponseHeaders: map[string]string{"x-email": oauthSA.Email},
+			wantResponseCode:    http.StatusOK,
 		},
 		{
-			testName:             "WrongOAuthTokenAuthorization",
-			serviceAccount:       oauthSA,
-			requestHeaders:       map[string]string{"authorization": fmt.Sprintf("bearer %s", "wrong token")},
-			expectedResponseCode: http.StatusUnauthorized,
+			name:             "WrongOAuthTokenAuthorization",
+			serviceAccount:   oauthSA,
+			requestHeaders:   map[string]string{"authorization": fmt.Sprintf("bearer %s", "wrong token")},
+			wantResponseCode: http.StatusUnauthorized,
 		},
 		{
-			testName:             "WrongKeyPairAuthorization",
-			serviceAccount:       keyPairSA,
-			requestHeaders:       map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", "wrong key_id", "wrong_key_secret")},
-			expectedResponseCode: http.StatusUnauthorized,
+			name:             "WrongKeyPairAuthorization",
+			serviceAccount:   keyPairSA,
+			requestHeaders:   map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", "wrong key_id", "wrong_key_secret")},
+			wantResponseCode: http.StatusUnauthorized,
 		},
 		{
-			testName:             "UndefinedAuthorization",
-			serviceAccount:       nil,
-			expectedResponseCode: http.StatusUnauthorized,
+			name:             "UndefinedAuthorization",
+			serviceAccount:   nil,
+			wantResponseCode: http.StatusUnauthorized,
 		},
 		{
-			testName:             "UnsupportedAuthorization",
-			serviceAccount:       oauthSA,
-			requestHeaders:       map[string]string{"authorization": fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte("user:password")))},
-			expectedResponseCode: http.StatusUnauthorized,
+			name:             "UnsupportedAuthorization",
+			serviceAccount:   oauthSA,
+			requestHeaders:   map[string]string{"authorization": fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte("user:password")))},
+			wantResponseCode: http.StatusUnauthorized,
 		},
 	}
 
 	for _, testCase := range testCases {
-		t.Run(testCase.testName, func(t *testing.T) {
+		t.Run(testCase.name, func(t *testing.T) {
 			app := helpers.GetApp(t)
 			req, err := http.NewRequest(http.MethodGet, "/service_accounts", nil)
-
 			if err != nil {
-				t.Errorf("Could not create HTTP request")
+				t.Fatalf("Could not create HTTP request")
 			}
 
 			for header, content := range testCase.requestHeaders {
@@ -80,14 +79,13 @@ func TestAuthMiddleware(t *testing.T) {
 
 			response := helpers.DoRequest(t, req, app.GetRouter())
 
-			if response.Code != testCase.expectedResponseCode {
-				t.Errorf("Expected status %d. Got %d", testCase.expectedResponseCode, response.Code)
+			if response.Code != testCase.wantResponseCode {
+				t.Errorf("Status = %d, want %d", response.Code, testCase.wantResponseCode)
 			}
 
-			for header, expectedHeaderVal := range testCase.expectedResponseHeaders {
-				headerVal := response.Header().Get(header)
-				if headerVal != expectedHeaderVal {
-					t.Errorf("Expected Header %s to be %s, got %s", header, expectedHeaderVal, headerVal)
+			for header, wantHeader := range testCase.wantResponseHeaders {
+				if gotHeader := response.Header().Get(header); gotHeader != wantHeader {
+					t.Errorf("Header %s = %s, want %s", header, gotHeader, wantHeader)
 				}
 			}
 		})
