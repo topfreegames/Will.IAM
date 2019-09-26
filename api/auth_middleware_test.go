@@ -18,7 +18,6 @@ func TestAuthMiddleware(t *testing.T) {
 	tokensRepo := helpers.GetRepo(t).Tokens
 	tokens, _ := tokensRepo.FindByEmail(oauthSA.Email)
 	token := tokens[0]
-	emptyMap := make(map[string]string)
 
 	testCases := []struct {
 		testName                string
@@ -42,32 +41,27 @@ func TestAuthMiddleware(t *testing.T) {
 			expectedResponseCode:    http.StatusOK,
 		},
 		{
-			testName:                "WrongOAuthTokenAuthorization",
-			serviceAccount:          oauthSA,
-			requestHeaders:          map[string]string{"authorization": fmt.Sprintf("bearer %s", "wrong token")},
-			expectedResponseHeaders: emptyMap,
-			expectedResponseCode:    http.StatusUnauthorized,
+			testName:             "WrongOAuthTokenAuthorization",
+			serviceAccount:       oauthSA,
+			requestHeaders:       map[string]string{"authorization": fmt.Sprintf("bearer %s", "wrong token")},
+			expectedResponseCode: http.StatusUnauthorized,
 		},
 		{
-			testName:                "WrongKeyPairAuthorization",
-			serviceAccount:          keyPairSA,
-			requestHeaders:          map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", "wrong key_id", "wrong_key_secret")},
-			expectedResponseHeaders: emptyMap,
-			expectedResponseCode:    http.StatusUnauthorized,
+			testName:             "WrongKeyPairAuthorization",
+			serviceAccount:       keyPairSA,
+			requestHeaders:       map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", "wrong key_id", "wrong_key_secret")},
+			expectedResponseCode: http.StatusUnauthorized,
 		},
 		{
-			testName:                "UndefinedAuthorization",
-			serviceAccount:          nil,
-			requestHeaders:          emptyMap,
-			expectedResponseHeaders: emptyMap,
-			expectedResponseCode:    http.StatusUnauthorized,
+			testName:             "UndefinedAuthorization",
+			serviceAccount:       nil,
+			expectedResponseCode: http.StatusUnauthorized,
 		},
 		{
-			testName:                "UnsupportedAuthorization",
-			serviceAccount:          oauthSA,
-			requestHeaders:          map[string]string{"authorization": fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte("user:password")))},
-			expectedResponseHeaders: emptyMap,
-			expectedResponseCode:    http.StatusUnauthorized,
+			testName:             "UnsupportedAuthorization",
+			serviceAccount:       oauthSA,
+			requestHeaders:       map[string]string{"authorization": fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte("user:password")))},
+			expectedResponseCode: http.StatusUnauthorized,
 		},
 	}
 
