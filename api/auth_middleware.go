@@ -19,7 +19,6 @@ const keyPairHeader = "KeyPair"
 const bearerTokenHeader = "Bearer"
 
 type authorizationHeader struct {
-	Header  string
 	Type    models.AuthenticationType
 	Content string
 }
@@ -37,25 +36,23 @@ func getServiceAccountID(ctx context.Context) (string, bool) {
 func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			logger := middleware.GetLogger(r.Context())
 			header := r.Header.Get("authorization")
-			authHeaderContents := strings.Split(header, " ")
-			authHeader := buildAuth(header, authHeaderContents[0], authHeaderContents[1])
-			if !authHeader.isValid() {
-				w.WriteHeader(http.StatusUnauthorized)
+			authHeader, err := buildAuth(header)
+			if err != nil {
+				handleInvalidAuth(w, logger)
 				return
 			}
 
 			var ctx context.Context
-			var err error
-			logger := middleware.GetLogger(r.Context())
 
 			switch authHeader.Type {
 			case models.AuthenticationTypes.KeyPair:
-				ctx, err = handleKeyPairAuth(r, w, authHeader, sasUC)
+				ctx, err = handleKeyPairAuth(r, w, *authHeader, sasUC)
 			case models.AuthenticationTypes.OAuth2:
-				ctx, err = handleOAuth2TokenAuth(r, w, authHeader, sasUC)
+				ctx, err = handleOAuth2TokenAuth(r, w, *authHeader, sasUC)
 			default:
-				handleUndefinedAuthType(w, logger)
+				handleInvalidAuth(w, logger)
 				return
 			}
 
@@ -69,7 +66,19 @@ func authMiddleware(sasUC usecases.ServiceAccounts) func(http.Handler) http.Hand
 	}
 }
 
-func buildAuth(header, method, content string) authorizationHeader {
+func buildAuth(authHeader string) (*authorizationHeader, error) {
+	authHeaderContents := strings.Split(authHeader, " ")
+
+	// A valid Authorization header content can come in two forms, both having 2 elements:
+	// ["KeyPair", "<key_id>:<key_secret>"]
+	// ["Bearer", "<token>"]
+	if len(authHeaderContents) != 2 {
+		return nil, errors.NewInvalidAuthorizationTypeError()
+	}
+
+	method := authHeaderContents[0]
+	content := authHeaderContents[1]
+
 	var authType models.AuthenticationType
 
 	if strings.EqualFold(method, keyPairHeader) {
@@ -80,18 +89,10 @@ func buildAuth(header, method, content string) authorizationHeader {
 		authType = models.AuthenticationTypes.Unknown
 	}
 
-	return authorizationHeader{
-		Header:  header,
+	return &authorizationHeader{
 		Type:    authType,
 		Content: content,
-	}
-}
-
-func (auth authorizationHeader) isValid() bool {
-	if auth.Header == "" || auth.Type == "" || auth.Content == "" {
-		return false
-	}
-	return true
+	}, nil
 }
 
 func handleKeyPairAuth(
@@ -101,9 +102,20 @@ func handleKeyPairAuth(
 	sasUC usecases.ServiceAccounts,
 ) (context.Context, error) {
 	keyPair := strings.Split(authHeader.Content, ":")
+	// Malformed KeyPair, must be in the format "<secret_id>:<secret_key>"
+	if len(keyPair) != 2 {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil, errors.NewInvalidAuthorizationTypeError()
+	}
+
 	accessKeyPairAuth, err := sasUC.WithContext(r.Context()).AuthenticateKeyPair(keyPair[0], keyPair[1])
 
 	if err != nil {
+		if _, ok := err.(*errors.EntityNotFoundError); ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil, err
+		}
+
 		w.WriteHeader(http.StatusInternalServerError)
 		return nil, err
 	}
@@ -143,7 +155,7 @@ func handleOAuth2TokenAuth(
 	return ctx, nil
 }
 
-func handleUndefinedAuthType(
+func handleInvalidAuth(
 	w http.ResponseWriter,
 	logger logrus.FieldLogger,
 ) {

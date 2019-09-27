@@ -34,7 +34,7 @@ func TestPermissionsRequestsListHandler(t *testing.T) {
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("Expected status 201. Got %d", rec.Code)
 	}
-	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t)
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 	req, _ = http.NewRequest("GET", "/permissions/requests/open", nil)
 	req.Header.Set("Authorization", fmt.Sprintf(
 		"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,

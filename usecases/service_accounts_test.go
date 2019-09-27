@@ -20,7 +20,7 @@ func TestServiceAccountsCreate(t *testing.T) {
 		Email: "test@domain.com",
 	}
 	if err := saUC.Create(saM); err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
+		t.Errorf("Unexpected error: %v", err)
 	}
 	if saM.ID == "" {
 		t.Errorf("Expected saM.ID to be non-empty")
@@ -35,325 +35,340 @@ func TestServiceAccountsCreateShouldCreateRoleAndRoleBinding(t *testing.T) {
 		Email: "test@domain.com",
 	}
 	if err := saUC.Create(saM); err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
-		return
+		t.Fatalf("Unexpected error: %v", err)
 	}
 	rs, err := saUC.GetRoles(saM.ID)
 	if err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
-		return
+		t.Fatalf("Unexpected error: %v", err)
 	}
 	if len(rs) != 1 {
-		t.Errorf("Should have only 1 role binding. Found %d", len(rs))
-		return
+		t.Fatalf("Should have only 1 role binding. Found %d", len(rs))
 	}
 	rName := fmt.Sprintf("service-account:%s", saM.ID)
 	if rs[0].Name != rName {
-		t.Errorf("Expected role name to be %s. Got %s", rName, rs[0].Name)
-		return
+		t.Fatalf("Expected role name to be %s. Got %s", rName, rs[0].Name)
 	}
 }
 
 type saHasPermissionTestCase struct {
-	regPs    []string
-	test     string
-	expected bool
+	name                      string
+	serviceAccountPermissions []string
+	permission                string
+	want                      bool
 }
 
 var saHasPermissionTestCases = []saHasPermissionTestCase{
 	// No permissions
 	saHasPermissionTestCase{
-		regPs:    nil,
-		test:     "Service1::RL::Do1::x::*",
-		expected: false,
+		name:                      "No Permissions",
+		serviceAccountPermissions: nil,
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      false,
 	},
 	// != Service
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::Do1::x::*"},
-		test:     "Service2::RL::Do1::x::*",
-		expected: false,
+		name:                      "Different Service",
+		serviceAccountPermissions: []string{"Service1::RL::Do1::x::*"},
+		permission:                "Service2::RL::Do1::x::*",
+		want:                      false,
 	},
 	// Toying around with actions, * and multiple layers in RH
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::Do1::x::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: true,
+		name:                      "Same permission",
+		serviceAccountPermissions: []string{"Service1::RL::Do1::x::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::Do2::x::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: false,
+		name:                      "Different action same hierarchy multiple levels",
+		serviceAccountPermissions: []string{"Service1::RL::Do2::x::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      false,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::Do2::x::*", "Service1::RL::Do1::x::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: true,
+		name:                      "Multiple permissions one equal match",
+		serviceAccountPermissions: []string{"Service1::RL::Do2::x::*", "Service1::RL::Do1::x::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::Do2::x::*", "Service1::RL::Do1::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: true,
+		name:                      "Multiple permissions one match with * in hierarchy",
+		serviceAccountPermissions: []string{"Service1::RL::Do2::x::*", "Service1::RL::Do1::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::*::x::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: true,
+		name:                      "Match action with * same resource hierarchy",
+		serviceAccountPermissions: []string{"Service1::RL::*::x::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::*::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: true,
+		name:                      "Match action with * match different hierarchy with *",
+		serviceAccountPermissions: []string{"Service1::RL::*::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::*::*"},
-		test:     "Service1::RL::Do2::*",
-		expected: true,
+		name:                      "Match action with * match different hierarchy with *",
+		serviceAccountPermissions: []string{"Service1::RL::*::*"},
+		permission:                "Service1::RL::Do2::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::Do1::*"},
-		test:     "Service1::RL::Do2::*",
-		expected: false,
+		name:                      "Different action same hierarchy single level",
+		serviceAccountPermissions: []string{"Service1::RL::Do1::*"},
+		permission:                "Service1::RL::Do2::*",
+		want:                      false,
 	},
 	// Ownership levels
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RL::Do1::x::*"},
-		test:     "Service1::RO::Do1::x::*",
-		expected: false,
+		name:                      "Different ownership level same hierarchy",
+		serviceAccountPermissions: []string{"Service1::RL::Do1::x::*"},
+		permission:                "Service1::RO::Do1::x::*",
+		want:                      false,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RO::Do1::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: true,
+		name:                      "Different ownership level different hierarchy matching with *",
+		serviceAccountPermissions: []string{"Service1::RO::Do1::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RO::Do1::x::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: true,
+		name:                      "Different ownership level same hierarchy",
+		serviceAccountPermissions: []string{"Service1::RO::Do1::x::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      true,
 	},
 	saHasPermissionTestCase{
-		regPs:    []string{"Service1::RO::Do1::y::*"},
-		test:     "Service1::RL::Do1::x::*",
-		expected: false,
+		name:                      "Different ownership level different hierarchy not match",
+		serviceAccountPermissions: []string{"Service1::RO::Do1::y::*"},
+		permission:                "Service1::RL::Do1::x::*",
+		want:                      false,
 	},
 }
 
 func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
-	for i, tt := range saHasPermissionTestCases {
-		helpers.CleanupPG(t)
-		saUC := helpers.GetServiceAccountsUseCase(t)
-		sa1Ps, err := models.BuildPermissions(tt.regPs)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		sa1 := &usecases.ServiceAccountWithNested{
-			Name:               "sa1",
-			Email:              "sa1@domain.com",
-			Permissions:        sa1Ps,
-			AuthenticationType: models.AuthenticationTypes.OAuth2,
-		}
-		if err := saUC.CreateWithNested(sa1); err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		has, err := saUC.HasPermissionString(sa1.ID, tt.test)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		if has != tt.expected {
-			t.Errorf("Expected has to be %v. Got %v. Case: %d", tt.expected, has, i)
-			return
-		}
+	for _, testCase := range saHasPermissionTestCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			helpers.CleanupPG(t)
+
+			saUC := helpers.GetServiceAccountsUseCase(t)
+			sa1Ps, err := models.BuildPermissions(testCase.serviceAccountPermissions)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			sa1 := &usecases.ServiceAccountWithNested{
+				Name:               "sa1",
+				Email:              "sa1@domain.com",
+				Permissions:        sa1Ps,
+				AuthenticationType: models.AuthenticationTypes.OAuth2,
+			}
+			if err := saUC.CreateWithNested(sa1); err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			has, err := saUC.HasPermissionString(sa1.ID, testCase.permission)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if has != testCase.want {
+				t.Fatalf("Expected has to be %v. Got %v", testCase.want, has)
+			}
+		})
 	}
 }
 
 func TestServiceAccountsHasPermissionWhenPermissionsOnNonBaseRole(t *testing.T) {
-	for i, tt := range saHasPermissionTestCases {
-		helpers.CleanupPG(t)
-		saUC := helpers.GetServiceAccountsUseCase(t)
-		sa1 := &models.ServiceAccount{
-			Name:  "sa1",
-			Email: "test@domain.com",
-		}
-		if err := saUC.Create(sa1); err != nil {
-			t.Errorf("Unexpected error: %s", err.Error())
-		}
-		ps, err := models.BuildPermissions(tt.regPs)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		rl1 := &usecases.RoleWithNested{
-			Name:               "role1",
-			Permissions:        ps,
-			ServiceAccountsIDs: []string{sa1.ID},
-		}
-		rsUC := helpers.GetRolesUseCase(t)
-		if err := rsUC.Create(rl1); err != nil {
-			t.Errorf("Unexpected error: %s", err.Error())
-		}
-		has, err := saUC.HasPermissionString(sa1.ID, tt.test)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		if has != tt.expected {
-			t.Errorf("Expected has to be %v. Got %v. Case: %d", tt.expected, has, i)
-			return
-		}
+	for _, testCase := range saHasPermissionTestCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			helpers.CleanupPG(t)
+
+			saUC := helpers.GetServiceAccountsUseCase(t)
+			sa1 := &models.ServiceAccount{
+				Name:  "sa1",
+				Email: "test@domain.com",
+			}
+			if err := saUC.Create(sa1); err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			ps, err := models.BuildPermissions(testCase.serviceAccountPermissions)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			rl1 := &usecases.RoleWithNested{
+				Name:               "role1",
+				Permissions:        ps,
+				ServiceAccountsIDs: []string{sa1.ID},
+			}
+			rsUC := helpers.GetRolesUseCase(t)
+			if err := rsUC.Create(rl1); err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+			has, err := saUC.HasPermissionString(sa1.ID, testCase.permission)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
+			}
+			if has != testCase.want {
+				t.Fatalf("Expected has to be %v. Got %v", testCase.want, has)
+			}
+		})
 	}
 }
 
 type saListWithPermissionTestCase struct {
-	sasPs    [][]string
-	test     string
-	expected []string
+	name                      string
+	serviceAccountPermissions [][]string
+	permission                string
+	want                      []string
 }
 
 var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 	saListWithPermissionTestCase{
-		sasPs: [][]string{
+		name: "Service Accounts equal match permission",
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RL::Do1::x::z"},
 		},
-		test:     "Service1::RL::Do1::x::z",
-		expected: []string{"root", "sa0", "sa2"},
+		permission: "Service1::RL::Do1::x::z",
+		want:       []string{"rootSAKeyPair", "sa0", "sa2"},
 	},
 	saListWithPermissionTestCase{
-		sasPs: [][]string{
+		name: "Service Accounts with equal match and hierarchy with *",
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RO::Do1::x::z"},
 		},
-		test:     "Service1::RO::Do1::x::z",
-		expected: []string{"root", "sa2"},
+		permission: "Service1::RO::Do1::x::z",
+		want:       []string{"rootSAKeyPair", "sa2"},
 	},
 	saListWithPermissionTestCase{
-		sasPs: [][]string{
+		name: "Service Accounts with different service permission",
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RO::Do1::x::z"},
 		},
-		test:     "Service2::RO::Do1::x::z",
-		expected: []string{"root"},
+		permission: "Service2::RO::Do1::x::z",
+		// Only rootSA matches because it has access to everything
+		want: []string{"rootSAKeyPair"},
 	},
 	saListWithPermissionTestCase{
-		sasPs: [][]string{
+		name: "Service Accounts with match in action with *",
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RO::*::x::z"},
 		},
-		test:     "Service1::RO::Do1::x::z",
-		expected: []string{"root", "sa2"},
+		permission: "Service1::RO::Do1::x::z",
+		want:       []string{"rootSAKeyPair", "sa2"},
 	},
 }
 
 func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T) {
-	for i, tt := range saListWithPermissionTestCases {
-		helpers.CleanupPG(t)
-		saUC := helpers.GetServiceAccountsUseCase(t)
-		root := helpers.CreateRootServiceAccountWithKeyPair(t)
-		sas := []*usecases.ServiceAccountWithNested{}
-		for j, psStr := range tt.sasPs {
-			ps, err := models.BuildPermissions(psStr)
+	for _, testCase := range saListWithPermissionTestCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			helpers.CleanupPG(t)
+
+			saUC := helpers.GetServiceAccountsUseCase(t)
+			root := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
+			sas := []*usecases.ServiceAccountWithNested{}
+
+			for j, psStr := range testCase.serviceAccountPermissions {
+				ps, err := models.BuildPermissions(psStr)
+				if err != nil {
+					t.Fatalf("Unexpected error: %v", err)
+				}
+				sa := &usecases.ServiceAccountWithNested{
+					Name:               fmt.Sprintf("sa%d", j),
+					Email:              fmt.Sprintf("sa%d@domain.com", j),
+					Permissions:        ps,
+					AuthenticationType: models.AuthenticationTypes.OAuth2,
+				}
+				if err := saUC.CreateWithNested(sa); err != nil {
+					t.Fatalf("Unexpected error: %v", err)
+				}
+				sas = append(sas, sa)
+			}
+			ps, err := models.BuildPermission(testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-				return
+				t.Fatalf("Unexpected error: %v", err)
 			}
-			sa := &usecases.ServiceAccountWithNested{
-				Name:               fmt.Sprintf("sa%d", j),
-				Email:              fmt.Sprintf("sa%d@domain.com", j),
-				Permissions:        ps,
-				AuthenticationType: models.AuthenticationTypes.OAuth2,
+			list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v", err)
 			}
-			if err := saUC.CreateWithNested(sa); err != nil {
-				t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-				return
+			if count != int64(len(testCase.want)) {
+				t.Fatalf("Expected to have %d service accounts. Got %d", len(testCase.want), count)
 			}
-			sas = append(sas, sa)
-		}
-		ps, err := models.BuildPermission(tt.test)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		if count != int64(len(tt.expected)) {
-			t.Errorf("Expected to have %d service accounts. Got %d. Case: %d", len(tt.expected), count, i)
-			return
-		}
-		if len(list) != len(tt.expected) {
-			t.Errorf("Expected len(list) to be %d. Got %d. Case: %d", len(tt.expected), len(list), i)
-			t.Errorf("List: %#v. Expected: %#v. Case: %d", list, tt.expected, i)
-			return
-		}
-		for j := range list {
-			if list[j].Name != tt.expected[j] {
-				t.Errorf("Expected list[%d] to be %s. Got %s. Case: %d", j, list[j], tt.expected[j], i)
+			if len(list) != len(testCase.want) {
+				out := fmt.Sprintf("Expected len(list) to be %d. Got %d", len(testCase.want), len(list)) +
+					fmt.Sprintf("Expected list: %#v, Got %#v", testCase.want, list)
+				t.Fatalf(out)
 			}
-		}
+			for j := range list {
+				if list[j].Name != testCase.want[j] {
+					t.Errorf("Expected list[%d] to be %s. Got %s", j, list[j], testCase.want[j])
+				}
+			}
+		})
 	}
 }
 
 func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing.T) {
-	for i, tt := range saListWithPermissionTestCases {
-		helpers.CleanupPG(t)
-		saUC := helpers.GetServiceAccountsUseCase(t)
-		root := helpers.CreateRootServiceAccountWithKeyPair(t)
-		sas := []*models.ServiceAccount{}
-		for j, psStr := range tt.sasPs {
-			sa := &models.ServiceAccount{
-				Name:  fmt.Sprintf("sa%d", j),
-				Email: fmt.Sprintf("sa%d@domain.com", j),
+	for _, testCase := range saListWithPermissionTestCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			helpers.CleanupPG(t)
+
+			saUC := helpers.GetServiceAccountsUseCase(t)
+			root := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
+			sas := []*models.ServiceAccount{}
+
+			for j, psStr := range testCase.serviceAccountPermissions {
+				sa := &models.ServiceAccount{
+					Name:  fmt.Sprintf("sa%d", j),
+					Email: fmt.Sprintf("sa%d@domain.com", j),
+				}
+				if err := saUC.Create(sa); err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				ps, err := models.BuildPermissions(psStr)
+				if err != nil {
+					t.Fatalf("Unexpected error: %v", err)
+				}
+				rl := &usecases.RoleWithNested{
+					Name:               fmt.Sprintf("roleSa%d", j),
+					Permissions:        ps,
+					ServiceAccountsIDs: []string{sa.ID},
+				}
+				rsUC := helpers.GetRolesUseCase(t)
+				if err := rsUC.Create(rl); err != nil {
+					t.Errorf("Unexpected error: %v", err)
+				}
+				sas = append(sas, sa)
 			}
-			if err := saUC.Create(sa); err != nil {
-				t.Errorf("Unexpected error: %s. Case %d", err.Error(), i)
-			}
-			ps, err := models.BuildPermissions(psStr)
+			ps, err := models.BuildPermission(testCase.permission)
 			if err != nil {
-				t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-				return
+				t.Fatalf("Unexpected error: %v.", err)
 			}
-			rl := &usecases.RoleWithNested{
-				Name:               fmt.Sprintf("roleSa%d", j),
-				Permissions:        ps,
-				ServiceAccountsIDs: []string{sa.ID},
+			list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
+			if err != nil {
+				t.Fatalf("Unexpected error: %v.", err)
 			}
-			rsUC := helpers.GetRolesUseCase(t)
-			if err := rsUC.Create(rl); err != nil {
-				t.Errorf("Unexpected error: %s. Case %d", err.Error(), i)
+			if count != int64(len(testCase.want)) {
+				t.Fatalf("Expected to have %d service accounts. Got %d.", len(testCase.want), count)
 			}
-			sas = append(sas, sa)
-		}
-		ps, err := models.BuildPermission(tt.test)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		list, count, err := saUC.ListWithPermission(root.ID, &repositories.ListOptions{}, ps)
-		if err != nil {
-			t.Errorf("Unexpected error: %s. Case: %d", err.Error(), i)
-			return
-		}
-		if count != int64(len(tt.expected)) {
-			t.Errorf("Expected to have %d service accounts. Got %d. Case: %d", len(tt.expected), count, i)
-			return
-		}
-		if len(list) != len(tt.expected) {
-			t.Errorf("Expected len(list) to be %d. Got %d. Case: %d", len(tt.expected), len(list), i)
-			t.Errorf("List: %#v. Expected: %#v. Case: %d", list, tt.expected, i)
-			return
-		}
-		for j := range list {
-			if list[j].Name != tt.expected[j] {
-				t.Errorf("Expected list[%d] to be %s. Got %s. Case: %d", j, list[j], tt.expected[j], i)
+			if len(list) != len(testCase.want) {
+				out := fmt.Sprintf("Expected len(list) to be %d. Got %d.", len(testCase.want), len(list)) +
+					fmt.Sprintf("Expected List: %#v, Got: %#v", testCase.want, list)
+				t.Fatalf(out)
 			}
-		}
+			for j := range list {
+				if list[j].Name != testCase.want[j] {
+					t.Errorf("Expected list[%d] to be %s. Got %s.", j, list[j], testCase.want[j])
+				}
+			}
+		})
 	}
 }
