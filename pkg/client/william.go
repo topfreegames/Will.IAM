@@ -152,29 +152,29 @@ func (wi *william) HandlerFunc(permission func(r *http.Request) string, next htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !wi.bypass && permission != nil {
 			auth := r.Header.Get("Authorization")
-			a, err := wi.hasPermission(r.Context(), auth, permission(setWilliam(r, wi)))
+			authInfo, err := wi.hasPermission(r.Context(), auth, permission(setWilliam(r, wi)))
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
 			}
 
-			if a.code != http.StatusOK && a.permission != "" {
-				w.WriteHeader(a.code)
+			if authInfo.code != http.StatusOK && authInfo.permission != "" {
+				w.WriteHeader(authInfo.code)
 				return
 			}
 
 			parts := strings.Split(auth, " ")
 			if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
-				if a.token != "" && a.token != parts[1] {
-					w.Header().Set("x-access-token", a.token)
+				if authInfo.token != "" && authInfo.token != parts[1] {
+					w.Header().Set("x-access-token", authInfo.token)
 				}
 
-				if a.email != "" {
-					w.Header().Set("x-email", a.email)
+				if authInfo.email != "" {
+					w.Header().Set("x-email", authInfo.email)
 				}
 			}
 
-			next(w, setAuth(r, a))
+			next(w, setAuth(r, authInfo))
 			return
 		}
 
