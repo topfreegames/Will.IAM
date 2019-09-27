@@ -54,7 +54,7 @@ type saHasPermissionTestCase struct {
 	name                      string
 	serviceAccountPermissions []string
 	permission                string
-	expected                  bool
+	want                      bool
 }
 
 var saHasPermissionTestCases = []saHasPermissionTestCase{
@@ -63,88 +63,88 @@ var saHasPermissionTestCases = []saHasPermissionTestCase{
 		name:                      "No Permissions",
 		serviceAccountPermissions: nil,
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  false,
+		want:                      false,
 	},
 	// != Service
 	saHasPermissionTestCase{
 		name:                      "Different Service",
 		serviceAccountPermissions: []string{"Service1::RL::Do1::x::*"},
 		permission:                "Service2::RL::Do1::x::*",
-		expected:                  false,
+		want:                      false,
 	},
 	// Toying around with actions, * and multiple layers in RH
 	saHasPermissionTestCase{
 		name:                      "Same permission",
 		serviceAccountPermissions: []string{"Service1::RL::Do1::x::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Different action same hierarchy multiple levels",
 		serviceAccountPermissions: []string{"Service1::RL::Do2::x::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  false,
+		want:                      false,
 	},
 	saHasPermissionTestCase{
 		name:                      "Multiple permissions one equal match",
 		serviceAccountPermissions: []string{"Service1::RL::Do2::x::*", "Service1::RL::Do1::x::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Multiple permissions one match with * in hierarchy",
 		serviceAccountPermissions: []string{"Service1::RL::Do2::x::*", "Service1::RL::Do1::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Match action with * same resource hierarchy",
 		serviceAccountPermissions: []string{"Service1::RL::*::x::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Match action with * match different hierarchy with *",
 		serviceAccountPermissions: []string{"Service1::RL::*::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Match action with * match different hierarchy with *",
 		serviceAccountPermissions: []string{"Service1::RL::*::*"},
 		permission:                "Service1::RL::Do2::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Different action same hierarchy single level",
 		serviceAccountPermissions: []string{"Service1::RL::Do1::*"},
 		permission:                "Service1::RL::Do2::*",
-		expected:                  false,
+		want:                      false,
 	},
 	// Ownership levels
 	saHasPermissionTestCase{
 		name:                      "Different ownership level same hierarchy",
 		serviceAccountPermissions: []string{"Service1::RL::Do1::x::*"},
 		permission:                "Service1::RO::Do1::x::*",
-		expected:                  false,
+		want:                      false,
 	},
 	saHasPermissionTestCase{
 		name:                      "Different ownership level different hierarchy matching with *",
 		serviceAccountPermissions: []string{"Service1::RO::Do1::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Different ownership level same hierarchy",
 		serviceAccountPermissions: []string{"Service1::RO::Do1::x::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  true,
+		want:                      true,
 	},
 	saHasPermissionTestCase{
 		name:                      "Different ownership level different hierarchy not match",
 		serviceAccountPermissions: []string{"Service1::RO::Do1::y::*"},
 		permission:                "Service1::RL::Do1::x::*",
-		expected:                  false,
+		want:                      false,
 	},
 }
 
@@ -171,8 +171,8 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnBaseRole(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			if has != testCase.expected {
-				t.Fatalf("Expected has to be %v. Got %v", testCase.expected, has)
+			if has != testCase.want {
+				t.Fatalf("Expected has to be %v. Got %v", testCase.want, has)
 			}
 		})
 	}
@@ -208,61 +208,61 @@ func TestServiceAccountsHasPermissionWhenPermissionsOnNonBaseRole(t *testing.T) 
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			if has != testCase.expected {
-				t.Fatalf("Expected has to be %v. Got %v", testCase.expected, has)
+			if has != testCase.want {
+				t.Fatalf("Expected has to be %v. Got %v", testCase.want, has)
 			}
 		})
 	}
 }
 
 type saListWithPermissionTestCase struct {
-	name       string
-	sasPs      [][]string
-	permission string
-	expected   []string
+	name                      string
+	serviceAccountPermissions [][]string
+	permission                string
+	want                      []string
 }
 
 var saListWithPermissionTestCases = []saListWithPermissionTestCase{
 	saListWithPermissionTestCase{
 		name: "Service Accounts equal match permission",
-		sasPs: [][]string{
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RL::Do1::x::z"},
 		},
 		permission: "Service1::RL::Do1::x::z",
-		expected:   []string{"rootSAKeyPair", "sa0", "sa2"},
+		want:       []string{"rootSAKeyPair", "sa0", "sa2"},
 	},
 	saListWithPermissionTestCase{
 		name: "Service Accounts with equal match and hierarchy with *",
-		sasPs: [][]string{
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RO::Do1::x::z"},
 		},
 		permission: "Service1::RO::Do1::x::z",
-		expected:   []string{"rootSAKeyPair", "sa2"},
+		want:       []string{"rootSAKeyPair", "sa2"},
 	},
 	saListWithPermissionTestCase{
 		name: "Service Accounts with different service permission",
-		sasPs: [][]string{
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RO::Do1::x::z"},
 		},
 		permission: "Service2::RO::Do1::x::z",
 		// Only rootSA matches because it has access to everything
-		expected: []string{"rootSAKeyPair"},
+		want: []string{"rootSAKeyPair"},
 	},
 	saListWithPermissionTestCase{
 		name: "Service Accounts with match in action with *",
-		sasPs: [][]string{
+		serviceAccountPermissions: [][]string{
 			[]string{"Service1::RL::Do1::x::*"},
 			[]string{"Service1::RL::Do1::x::y"},
 			[]string{"Service1::RO::*::x::z"},
 		},
 		permission: "Service1::RO::Do1::x::z",
-		expected:   []string{"rootSAKeyPair", "sa2"},
+		want:       []string{"rootSAKeyPair", "sa2"},
 	},
 }
 
@@ -275,7 +275,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 			root := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 			sas := []*usecases.ServiceAccountWithNested{}
 
-			for j, psStr := range testCase.sasPs {
+			for j, psStr := range testCase.serviceAccountPermissions {
 				ps, err := models.BuildPermissions(psStr)
 				if err != nil {
 					t.Fatalf("Unexpected error: %v", err)
@@ -299,16 +299,17 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnBaseRole(t *testing.T)
 			if err != nil {
 				t.Fatalf("Unexpected error: %v", err)
 			}
-			if count != int64(len(testCase.expected)) {
-				t.Fatalf("Expected to have %d service accounts. Got %d", len(testCase.expected), count)
+			if count != int64(len(testCase.want)) {
+				t.Fatalf("Expected to have %d service accounts. Got %d", len(testCase.want), count)
 			}
-			if len(list) != len(testCase.expected) {
-				t.Fatalf("Expected len(list) to be %d. Got %d", len(testCase.expected), len(list))
-				t.Fatalf("List: %#v. Expected: %#v", list, testCase.expected)
+			if len(list) != len(testCase.want) {
+				out := fmt.Sprintf("Expected len(list) to be %d. Got %d", len(testCase.want), len(list)) +
+					fmt.Sprintf("Expected list: %#v, Got %#v", testCase.want, list)
+				t.Fatalf(out)
 			}
 			for j := range list {
-				if list[j].Name != testCase.expected[j] {
-					t.Errorf("Expected list[%d] to be %s. Got %s", j, list[j], testCase.expected[j])
+				if list[j].Name != testCase.want[j] {
+					t.Errorf("Expected list[%d] to be %s. Got %s", j, list[j], testCase.want[j])
 				}
 			}
 		})
@@ -324,7 +325,7 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 			root := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 			sas := []*models.ServiceAccount{}
 
-			for j, psStr := range testCase.sasPs {
+			for j, psStr := range testCase.serviceAccountPermissions {
 				sa := &models.ServiceAccount{
 					Name:  fmt.Sprintf("sa%d", j),
 					Email: fmt.Sprintf("sa%d@domain.com", j),
@@ -355,16 +356,17 @@ func TestServiceAccountsListWithPermissionWhenPermissionOnNonBaseRole(t *testing
 			if err != nil {
 				t.Fatalf("Unexpected error: %v.", err)
 			}
-			if count != int64(len(testCase.expected)) {
-				t.Fatalf("Expected to have %d service accounts. Got %d.", len(testCase.expected), count)
+			if count != int64(len(testCase.want)) {
+				t.Fatalf("Expected to have %d service accounts. Got %d.", len(testCase.want), count)
 			}
-			if len(list) != len(testCase.expected) {
-				t.Fatalf("Expected len(list) to be %d. Got %d.", len(testCase.expected), len(list))
-				t.Fatalf("List: %#v. Expected: %#v.", list, testCase.expected)
+			if len(list) != len(testCase.want) {
+				out := fmt.Sprintf("Expected len(list) to be %d. Got %d.", len(testCase.want), len(list)) +
+					fmt.Sprintf("Expected List: %#v, Got: %#v", testCase.want, list)
+				t.Fatalf(out)
 			}
 			for j := range list {
-				if list[j].Name != testCase.expected[j] {
-					t.Errorf("Expected list[%d] to be %s. Got %s.", j, list[j], testCase.expected[j])
+				if list[j].Name != testCase.want[j] {
+					t.Errorf("Expected list[%d] to be %s. Got %s.", j, list[j], testCase.want[j])
 				}
 			}
 		})

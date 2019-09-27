@@ -102,9 +102,20 @@ func handleKeyPairAuth(
 	sasUC usecases.ServiceAccounts,
 ) (context.Context, error) {
 	keyPair := strings.Split(authHeader.Content, ":")
+	// Malformed KeyPair, must be in the format "<secret_id>:<secret_key>"
+	if len(keyPair) != 2 {
+		w.WriteHeader(http.StatusUnauthorized)
+		return nil, errors.NewInvalidAuthorizationTypeError()
+	}
+
 	accessKeyPairAuth, err := sasUC.WithContext(r.Context()).AuthenticateKeyPair(keyPair[0], keyPair[1])
 
 	if err != nil {
+		if _, ok := err.(*errors.EntityNotFoundError); ok {
+			w.WriteHeader(http.StatusUnauthorized)
+			return nil, err
+		}
+
 		w.WriteHeader(http.StatusInternalServerError)
 		return nil, err
 	}

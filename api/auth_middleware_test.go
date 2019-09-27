@@ -29,7 +29,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name:                "KeyPairAuthorization",
 			serviceAccount:      keyPairSA,
-			requestHeaders:      map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", keyPairSA.KeyID, keyPairSA.KeySecret)},
+			requestHeaders:      map[string]string{"authorization": fmt.Sprintf("keypair %v:%v", keyPairSA.KeyID, keyPairSA.KeySecret)},
 			wantResponseHeaders: map[string]string{"x-service-account-name": "keyPairUser"},
 			wantResponseCode:    http.StatusOK,
 		},
@@ -43,13 +43,25 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name:             "WrongOAuthTokenAuthorization",
 			serviceAccount:   oauthSA,
-			requestHeaders:   map[string]string{"authorization": fmt.Sprintf("bearer %s", "wrong token")},
+			requestHeaders:   map[string]string{"authorization": "bearer wrong_token"},
 			wantResponseCode: http.StatusUnauthorized,
 		},
 		{
 			name:             "WrongKeyPairAuthorization",
 			serviceAccount:   keyPairSA,
-			requestHeaders:   map[string]string{"authorization": fmt.Sprintf("keypair %s:%s", "wrong key_id", "wrong_key_secret")},
+			requestHeaders:   map[string]string{"authorization": "keypair wrong_key_id:wrong_key_secret"},
+			wantResponseCode: http.StatusUnauthorized,
+		},
+		{
+			name:             "IncompleteOAuthTokenAuthorization",
+			serviceAccount:   keyPairSA,
+			requestHeaders:   map[string]string{"authorization": "bearer"},
+			wantResponseCode: http.StatusUnauthorized,
+		},
+		{
+			name:             "IncompleteKeyPairAuthorization",
+			serviceAccount:   keyPairSA,
+			requestHeaders:   map[string]string{"authorization": "keypair wrong_key_id"},
 			wantResponseCode: http.StatusUnauthorized,
 		},
 		{
@@ -80,12 +92,12 @@ func TestAuthMiddleware(t *testing.T) {
 			response := helpers.DoRequest(t, req, app.GetRouter())
 
 			if response.Code != testCase.wantResponseCode {
-				t.Errorf("Status = %d, want %d", response.Code, testCase.wantResponseCode)
+				t.Errorf("Status = %v, want %v", response.Code, testCase.wantResponseCode)
 			}
 
 			for header, wantHeader := range testCase.wantResponseHeaders {
 				if gotHeader := response.Header().Get(header); gotHeader != wantHeader {
-					t.Errorf("Header %s = %s, want %s", header, gotHeader, wantHeader)
+					t.Errorf("Header %v = %v, want %v", header, gotHeader, wantHeader)
 				}
 			}
 		})
