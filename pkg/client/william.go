@@ -183,11 +183,18 @@ func (wi *william) HandlerFunc(permission func(r *http.Request) string, next htt
 }
 
 func (wi *william) AmHandler(w http.ResponseWriter, r *http.Request) {
-	list := []AmPermission{}
+	prefix := r.URL.Query().Get("prefix")
+	list := wi.amList(r.Context(), prefix)
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(list)
+}
+
+func (wi *william) amList(ctx context.Context, prefix string) []AmPermission {
 	wi.RLock()
 	defer wi.RUnlock()
 
-	prefix := r.URL.Query().Get("prefix")
+	list := []AmPermission{}
 	if strings.HasSuffix(prefix, "::") {
 		action := strings.Split(prefix, "::")[0]
 		if f, ok := wi.actions[action]; ok {
@@ -196,7 +203,7 @@ func (wi *william) AmHandler(w http.ResponseWriter, r *http.Request) {
 				Complete: true,
 			})
 			if f != nil {
-				list = append(list, f(r.Context(), prefix)...)
+				list = append(list, f(ctx, prefix)...)
 			}
 		}
 	} else {
@@ -208,8 +215,7 @@ func (wi *william) AmHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(list)
+	return list
 }
 
 func (wi *william) AddAction(action string) {
