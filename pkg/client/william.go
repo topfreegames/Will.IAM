@@ -14,9 +14,9 @@ import (
 
 // William Interface
 type William interface {
-	Enable()
+	ByPass()
 	SetClient(client HttpClient)
-	SetKey(id, secret string)
+	SetKeyPair(id, secret string)
 	GetServiceName() string
 	ListPermission(ctx context.Context, ownershipLevel, action string, resourceHierarchy ...string) ([]byte, error)
 	HandlerFunc(permission func(r *http.Request) string, next http.HandlerFunc) http.HandlerFunc
@@ -52,20 +52,22 @@ type william struct {
 	client HttpClient
 }
 
+// New create a new william client
 func New(baseURL, serviceName string) William {
 	wi := &william{
 		baseURL:     baseURL,
 		actions:     make(map[string]ActionResourceFunc),
 		serviceName: serviceName,
-		bypass:      true,
 		client:      http.DefaultClient,
 	}
 
 	return wi
 }
 
-func (wi *william) Enable() {
-	wi.bypass = false
+// ByPass will disable the permission. Auth info will be ignored.
+// to get the information and don't check the permission, use GenerateInfo()
+func (wi *william) ByPass() {
+	wi.bypass = true
 }
 
 func (wi *william) SetClient(client HttpClient) {
@@ -75,11 +77,13 @@ func (wi *william) SetClient(client HttpClient) {
 	wi.client = client
 }
 
-func (wi *william) SetKey(id, secret string) {
+// SetKeyPair set a keypair if your client need to use any william api
+func (wi *william) SetKeyPair(id, secret string) {
 	wi.keyID = id
 	wi.keySecret = secret
 }
 
+// GetServiceName return the service name register for this client
 func (wi *william) GetServiceName() string { return wi.serviceName }
 
 func (wi *william) hasPermission(ctx context.Context, accessToken, permission string) (*AuthInfo, error) {

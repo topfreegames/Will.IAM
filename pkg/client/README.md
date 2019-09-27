@@ -19,15 +19,15 @@ wi.SetClient(
 If your service will use any internal function of william like a service, Ej: adding permission directly from your service and not from the Hub you need to set a KeyPair to auth.
 
 ```go
-wi.SetKey(
+wi.SetKeyPair(
     "ServiceKeyID",
     "ServiceKeySecret",
 )
 ```
 
-By default William is created with a bypass, you can enable with:
+By default William is created enable, you can bypass him with:
 ```go
-wi.Enable()
+wi.ByPass()
 ```
 
 ## Permissions Handler

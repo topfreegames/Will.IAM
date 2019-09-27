@@ -28,7 +28,7 @@ func TestWilliamListPermission(t *testing.T) {
 
 	wi := william.New(williamServer.URL, "ServicesStatus")
 	wi.SetClient(williamServer.Client())
-	wi.SetKey("CLIENT_ID", "CLIENT_SECRET")
+	wi.SetKeyPair("CLIENT_ID", "CLIENT_SECRET")
 
 	list, err := wi.ListPermission(ctx, "RL", "Something", "Game")
 	assert.NoError(t, err)
@@ -54,8 +54,7 @@ func TestWilliamPermissionWithNewAuthToken(t *testing.T) {
 
 	wi := william.New(williamServer.URL, "ServicesStatus")
 	wi.SetClient(williamServer.Client())
-	wi.SetKey("CLIENT_ID", "CLIENT_SECRET")
-	wi.Enable()
+	wi.SetKeyPair("CLIENT_ID", "CLIENT_SECRET")
 
 	req := httptest.NewRequest(http.MethodGet, "/action", nil)
 	req.Header.Set("Authorization", authToken)
@@ -89,7 +88,8 @@ func TestWilliamPermissionDissable(t *testing.T) {
 
 	wi := william.New(williamServer.URL, "ServicesStatus")
 	wi.SetClient(williamServer.Client())
-	wi.SetKey("CLIENT_ID", "CLIENT_SECRET")
+	wi.SetKeyPair("CLIENT_ID", "CLIENT_SECRET")
+	wi.ByPass()
 
 	req := httptest.NewRequest(http.MethodGet, "/action", nil)
 
