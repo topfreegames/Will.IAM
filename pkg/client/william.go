@@ -14,7 +14,7 @@ import (
 
 // William Interface
 type William interface {
-	ByPass()
+	Bypass()
 	SetClient(client HttpClient)
 	SetKeyPair(id, secret string)
 	GetServiceName() string
@@ -64,9 +64,9 @@ func New(baseURL, serviceName string) William {
 	return wi
 }
 
-// ByPass will disable the permission. Auth info will be ignored.
+// Bypass will disable the permission. Auth info will be ignored.
 // to get the information and don't check the permission, use GenerateInfo()
-func (wi *william) ByPass() {
+func (wi *william) Bypass() {
 	wi.bypass = true
 }
 
@@ -152,7 +152,9 @@ func (wi *william) HandlerFunc(permission func(r *http.Request) string, next htt
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !wi.bypass && permission != nil {
 			auth := r.Header.Get("Authorization")
-			authInfo, err := wi.hasPermission(r.Context(), auth, permission(setWilliam(r, wi)))
+			authInfo, err := wi.hasPermission(r.Context(), auth, permission(
+				r.WithContext(setWilliam(r.Context(), wi)),
+			))
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				return
@@ -174,7 +176,7 @@ func (wi *william) HandlerFunc(permission func(r *http.Request) string, next htt
 				}
 			}
 
-			next(w, setAuth(r, authInfo))
+			next(w, r.WithContext(setAuth(r.Context(), authInfo)))
 			return
 		}
 

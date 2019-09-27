@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"net/http"
 )
 
 type contextKey int
@@ -12,50 +11,50 @@ const (
 	williamKey
 )
 
-func Auth(r *http.Request) *AuthInfo {
-	if r == nil {
+func Auth(ctx context.Context) *AuthInfo {
+	if ctx == nil {
 		return nil
 	}
 
-	return auth(r)
+	return auth(ctx)
 }
 
-func auth(r *http.Request) *AuthInfo {
-	if a := r.Context().Value(authKey); a != nil {
+func auth(ctx context.Context) *AuthInfo {
+	if a := ctx.Value(authKey); a != nil {
 		return a.(*AuthInfo)
 	}
 
 	return nil
 }
 
-func Get(r *http.Request) William {
-	if r == nil {
+func Get(ctx context.Context) William {
+	if ctx == nil {
 		return nil
 	}
 
-	return get(r)
+	return get(ctx)
 }
 
-func get(r *http.Request) William {
-	if a := r.Context().Value(williamKey); a != nil {
+func get(ctx context.Context) William {
+	if a := ctx.Value(williamKey); a != nil {
 		return a.(William)
 	}
 
 	return nil
 }
 
-func setAuth(r *http.Request, a *AuthInfo) *http.Request {
+func setAuth(ctx context.Context, a *AuthInfo) context.Context {
 	if a == nil {
-		return r
+		return ctx
 	}
 
-	return r.WithContext(context.WithValue(r.Context(), authKey, a))
+	return context.WithValue(ctx, authKey, a)
 }
 
-func setWilliam(r *http.Request, wi William) *http.Request {
-	if wi == nil {
-		return r
+func setWilliam(ctx context.Context, will William) context.Context {
+	if will == nil {
+		return ctx
 	}
 
-	return r.WithContext(context.WithValue(r.Context(), williamKey, wi))
+	return context.WithValue(ctx, williamKey, will)
 }

@@ -30,10 +30,10 @@ will.SetKeyPair(
 )
 ```
 
-By default, Will.IAM is enabled, You can disable it using will.ByPass()
+By default, Will.IAM is enabled, You can disable it using will.Bypass()
 
 ```go
-will.ByPass()
+will.Bypass()
 ```
 
 ## Permissions Handler
@@ -45,7 +45,7 @@ mux.HandleFunc("/action",
     will.HandlerFunc(will.Generate("RL", "Action"),
     func(w http.ResponseWriter, r *http.Request) {
         // On Request you will have access to william.
-        auth := william.Auth(r)
+        auth := william.Auth(r.Context())
         fmt.Fprintf(w, "Your mail is: %s!", auth.Email())
     }),
 )
@@ -57,7 +57,7 @@ If you want to create a custom permission check, provide a function like this:
 ```go
 permission := func(r *http.Request) string {
     // You can get access to your William Instance.
-    if will := william.Get(r); will != nil {
+    if will := william.Get(r.Context()); will != nil {
         return fmt.Sprintf(
             "%s::%s::%s::%s",
             will.GetServiceName(),
@@ -71,10 +71,10 @@ permission := func(r *http.Request) string {
 }
 
 mux.HandleFunc("/action",
-    permission,
+    will.HandlerFunc(permission,
     func(w http.ResponseWriter, r *http.Request) {
         // On Request you will have access to william.
-        auth := william.Auth(r)
+        auth := william.Auth(r.Context())
         fmt.Fprintf(w, "Your mail is: %s!", auth.Email())
     }),
 )
@@ -90,7 +90,7 @@ and you want to check the permission for every gameid, you can use
 
 ```go
 permission := func(r *http.Request) string {
-    if will := william.Get(r); will != nil {
+    if will := william.Get(r.Context()); will != nil {
         vars := mux.Vars(r)
 
         return fmt.Sprintf(
@@ -106,10 +106,10 @@ permission := func(r *http.Request) string {
 }
 
 mux.HandleFunc("/action/{gameid}",
-    permission,
+    will.HandlerFunc(permission,
     func(w http.ResponseWriter, r *http.Request) {
         // On Request you will have access to william.
-        auth := william.Auth(r)
+        auth := william.Auth(r.Context())
         fmt.Fprintf(w, "Your mail is: %s!", auth.Email())
     }),
 )

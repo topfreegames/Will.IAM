@@ -62,7 +62,7 @@ func TestWilliamPermissionWithNewAuthToken(t *testing.T) {
 	rr := httptest.NewRecorder()
 	wi.HandlerFunc(wi.Generate("RL", "Action"),
 		func(w http.ResponseWriter, r *http.Request) {
-			auth := william.Auth(r)
+			auth := william.Auth(r.Context())
 			assert.NotNil(t, auth)
 
 			assert.Equal(t, email, auth.Email())
@@ -89,14 +89,14 @@ func TestWilliamPermissionDissable(t *testing.T) {
 	wi := william.New(williamServer.URL, "ServicesStatus")
 	wi.SetClient(williamServer.Client())
 	wi.SetKeyPair("CLIENT_ID", "CLIENT_SECRET")
-	wi.ByPass()
+	wi.Bypass()
 
 	req := httptest.NewRequest(http.MethodGet, "/action", nil)
 
 	rr := httptest.NewRecorder()
 	wi.HandlerFunc(wi.Generate("RL", "Action"),
 		func(w http.ResponseWriter, r *http.Request) {
-			auth := william.Auth(r)
+			auth := william.Auth(r.Context())
 			assert.Nil(t, auth)
 
 			w.WriteHeader(http.StatusOK)

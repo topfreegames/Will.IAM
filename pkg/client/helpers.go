@@ -12,7 +12,7 @@ func Generate(ownershipLevel, action string, resourceHierarchy ...string) func(r
 	}
 
 	return func(r *http.Request) string {
-		if wi := Get(r); wi != nil {
+		if wi := Get(r.Context()); wi != nil {
 			return fmt.Sprintf(
 				"%s::%s::%s::%s",
 				wi.GetServiceName(),
