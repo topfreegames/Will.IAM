@@ -1,6 +1,6 @@
 # William
 
-The aim of this library is to prevent writing to much code using william on your application.
+This library aims to prevent writing to much code using william on your application.
 
 ## Creating a service
 ```go
@@ -16,7 +16,7 @@ wi.SetClient(
 )
 ```
 
-If you service will use any internal function of william like a service, Ej: adding permission direct from you service and not from the Hub you need to set a KeyPair to auth.
+If your service will use any internal function of william like a service, Ej: adding permission directly from your service and not from the Hub you need to set a KeyPair to auth.
 
 ```go
 wi.SetKey(
@@ -43,9 +43,9 @@ mux.HandleFunc("/action",
     }),
 )
 ```
-I recommend to always register you actions using the method by your william instance, so you can have a generate list for /am.
+I recommend always to register you actions using the method by your william instance, so you can have a generated list for /am.
 
-If you want to create a custom check if permission will have to provide a function like this: 
+If you want to create a custom permission check, provide a function like this: 
 ```go
 permission := func(r *http.Request) string {
     // You can get access to your William Instance.
@@ -65,7 +65,7 @@ permission := func(r *http.Request) string {
 
 ### Another example if you use Gorrila Mux:
 
-You have route that is something like:
+You have a route that is something like:
 ```
 /action/{gameid}
 ```
@@ -90,16 +90,16 @@ permission := func(r *http.Request) string {
 ```
 
 ## /am
-For get a list of actions and resource that your service have, you need to provide a endpoint.
-This is the most difficult part but with some helper you can archive this in a easy way.
+The most challenging part, but with some helper, you can easily archive this.
+To get a list of actions and resource that your service has, you need to provide an endpoint.
 
-If you use generate on your william interface, all that action will be register and will be exported automatically.
+If you use generate on your william interface, all that action will be register and exported automatically.
 If not, you can use:
 ```go
 wi.AddAction("Action")
 ```
 that will register an action like: ::Action::* 
-but if you have resource you will need to use AddActionFunc.
+but if you have a resource, you will need to use AddActionFunc.
 An example of how to use:
 ```go
 s.william.AddActionFunc("EditCategory", func(ctx context.Context, prefix string) []william.AmPermission {
@@ -120,8 +120,8 @@ s.william.AddActionFunc("EditCategory", func(ctx context.Context, prefix string)
 })
 ```
 
-Now you just only need to expose a /am
-I recommend to use an internal port and not expose to the internet. (On the hub you set the internal cluster dns to the service)
+Now you only need to expose a /am
+I recommend to use an internal port and not expose to the internet. (On the hub you set the internal cluster DNS to the service)
 ```go
 func (s *Server) runInternal() {
 	mux := http.NewServeMux()
