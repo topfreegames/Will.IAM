@@ -36,7 +36,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name:                "OAuthAuthorization",
 			serviceAccount:      oauthSA,
-			requestHeaders:      map[string]string{"authorization": fmt.Sprintf("bearer %s", token.AccessToken)},
+			requestHeaders:      map[string]string{"authorization": fmt.Sprintf("bearer %v", token.AccessToken)},
 			wantResponseHeaders: map[string]string{"x-email": oauthSA.Email},
 			wantResponseCode:    http.StatusOK,
 		},
@@ -72,7 +72,7 @@ func TestAuthMiddleware(t *testing.T) {
 		{
 			name:             "UnsupportedAuthorization",
 			serviceAccount:   oauthSA,
-			requestHeaders:   map[string]string{"authorization": fmt.Sprintf("basic %s", base64.StdEncoding.EncodeToString([]byte("user:password")))},
+			requestHeaders:   map[string]string{"authorization": fmt.Sprintf("basic %v", base64.StdEncoding.EncodeToString([]byte("user:password")))},
 			wantResponseCode: http.StatusUnauthorized,
 		},
 	}
