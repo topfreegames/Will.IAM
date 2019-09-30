@@ -186,7 +186,7 @@ func TestServicesGetHandler(t *testing.T) {
 		{
 			name:       "InvalidUUID",
 			id:         "o2206115-4f58-4d44-b200-5b227098070a",
-			wantStatus: http.StatusUnprocessableEntity,
+			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "FoundID",

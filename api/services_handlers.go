@@ -76,7 +76,7 @@ func servicesGetHandler(
 		svc, err := ssUC.WithContext(r.Context()).Get(id)
 		if err != nil {
 			l.Error(err)
-			w.WriteHeader(http.StatusUnprocessableEntity)
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		// Service not found
