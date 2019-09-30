@@ -52,6 +52,7 @@ func TestServicesCreateHandler(t *testing.T) {
 	req.Header.Set("Authorization", fmt.Sprintf(
 		"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
 	))
+
 	rec := helpers.DoRequest(t, req, app.GetRouter())
 	if rec.Code != http.StatusCreated {
 		t.Errorf("Expected 201. Got %d", rec.Code)
@@ -77,5 +78,69 @@ func TestServicesCreateHandler(t *testing.T) {
 			ss[0].PermissionName,
 		)
 		return
+	}
+}
+
+func TestServicesGetHandler(t *testing.T) {
+	beforeEachServices(t)
+
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
+	service := &models.Service{
+		Name:                    "Some Service",
+		PermissionName:          "SomeService",
+		CreatorServiceAccountID: rootSA.ID,
+		AMURL:                   "http://localhost:3333/am",
+	}
+	servicesUC := helpers.GetServicesUseCase(t)
+	err := servicesUC.Create(service)
+	if err != nil {
+		t.Fatalf("Error persisting Service = %v", service)
+	}
+
+	testCases := []struct {
+		name       string
+		id         string
+		wantStatus int
+	}{
+		{
+			name:       "BlankID",
+			id:         "",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "InexistentID",
+			id:         "e6fee046-6045-45d2-b6f1-a21b82977782",
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "InvalidUUID",
+			id:         "o2206115-4f58-4d44-b200-5b227098070a",
+			wantStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name:       "FoundID",
+			id:         service.ID,
+			wantStatus: http.StatusOK,
+		},
+	}
+
+	app := helpers.GetApp(t)
+	bts, err := json.Marshal(service)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+		return
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req, _ := http.NewRequest("GET", fmt.Sprintf("/services/%s", testCase.id), bytes.NewBuffer(bts))
+			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
+
+			rec := helpers.DoRequest(t, req, app.GetRouter())
+
+			if rec.Code != testCase.wantStatus {
+				t.Errorf("Want HTTP Status %v, got %v", testCase.wantStatus, rec.Code)
+			}
+		})
 	}
 }

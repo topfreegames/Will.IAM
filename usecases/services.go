@@ -42,9 +42,7 @@ func (ss services) Create(service *models.Service) error {
 		if err := repo.Services.Create(service); err != nil {
 			return err
 		}
-		buildFullAccessPermissionForRoleID := func(
-			roleID string,
-		) *models.Permission {
+		buildFullAccessPermissionForRoleID := func(roleID string) *models.Permission {
 			return &models.Permission{
 				Service:           service.PermissionName,
 				OwnershipLevel:    models.OwnershipLevels.Owner,

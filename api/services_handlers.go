@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/usecases"
-	"github.com/gorilla/mux"
 	"github.com/topfreegames/extensions/middleware"
 )
 
@@ -72,20 +72,26 @@ func servicesGetHandler(
 ) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		l := middleware.GetLogger(r.Context())
-		s, err := ssUC.WithContext(r.Context()).Get(mux.Vars(r)["id"])
+		id := mux.Vars(r)["id"]
+		svc, err := ssUC.WithContext(r.Context()).Get(id)
 		if err != nil {
 			l.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			return
+		}
+		// Service not found
+		if svc.ID == "" {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		// TODO: get service account and creator service account
-		bts, err := keepJSONFieldsBytes(s, "id", "name", "permissionName", "amUrl")
+		json, err := keepJSONFieldsBytes(svc, "id", "name", "permissionName", "amUrl")
 		if err != nil {
 			l.Error(err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		WriteBytes(w, 200, bts)
+		WriteBytes(w, 200, json)
 	}
 }
 
