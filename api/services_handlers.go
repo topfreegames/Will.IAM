@@ -48,7 +48,7 @@ func servicesCreateHandler(
 		err = json.Unmarshal(body, service)
 		if err != nil {
 			l.WithError(err).Error("servicesCreateHandler json.Unmarshal failed")
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		v := service.Validate()

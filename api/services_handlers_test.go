@@ -24,6 +24,7 @@ func beforeEachServices(t *testing.T) {
 
 func TestServicesCreateHandler(t *testing.T) {
 	beforeEachServices(t)
+
 	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
 	saUC := helpers.GetServiceAccountsUseCase(t)
 	sa := &models.ServiceAccount{
@@ -42,42 +43,112 @@ func TestServicesCreateHandler(t *testing.T) {
 		AMURL:                   "http://localhost:3333/am",
 	}
 
-	app := helpers.GetApp(t)
-	bts, err := json.Marshal(service)
-	if err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
-		return
+	invalidService := &models.Service{
+		Name:                    "",
+		PermissionName:          "SomeService",
+		CreatorServiceAccountID: sa.ID,
+		AMURL:                   "http://localhost:3333/am",
 	}
-	req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(bts))
-	req.Header.Set("Authorization", fmt.Sprintf(
-		"KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret,
-	))
 
-	rec := helpers.DoRequest(t, req, app.GetRouter())
-	if rec.Code != http.StatusCreated {
-		t.Errorf("Expected 201. Got %d", rec.Code)
-		return
-	}
-	ssUC := helpers.GetServicesUseCase(t)
-	ss, err := ssUC.List()
+	validJson, err := json.Marshal(service)
 	if err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
-		return
+		t.Fatalf("Unexpected error: %s", err.Error())
 	}
-	if len(ss) != 1 {
-		t.Errorf("Expected to have 1 service. Got %d", len(ss))
-		return
+
+	invalidJson, err := json.Marshal(invalidService)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err.Error())
 	}
-	if ss[0].Name != "Some Service" {
-		t.Errorf("Expected service name to be Some Service. Got %s", ss[0].Name)
-		return
+
+	testCases := []struct {
+		name       string
+		json       []byte
+		wantStatus int
+	}{
+		{
+			name:       "MalformedJSON",
+			json:       []byte("{"),
+			wantStatus: http.StatusBadRequest,
+		},
+		{
+			name:       "InvalidJSON",
+			json:       invalidJson,
+			wantStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name:       "ValidJSON",
+			json:       validJson,
+			wantStatus: http.StatusCreated,
+		},
 	}
-	if ss[0].PermissionName != "SomeService" {
-		t.Errorf(
-			"Expected service permission name to be SomeService. Got %s",
-			ss[0].PermissionName,
-		)
-		return
+
+	app := helpers.GetApp(t)
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(testCase.json))
+			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
+
+			rec := helpers.DoRequest(t, req, app.GetRouter())
+			if rec.Code != testCase.wantStatus {
+				t.Fatalf("Expected %v got %v", testCase.wantStatus, rec.Code)
+			}
+		})
+	}
+}
+
+func TestServicesCreateHandlerServicePersistence(t *testing.T) {
+	beforeEachServices(t)
+
+	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
+	saUC := helpers.GetServiceAccountsUseCase(t)
+	sa := &models.ServiceAccount{
+		Name:  "any",
+		Email: "any@email.com",
+	}
+	if err := saUC.Create(sa); err != nil {
+		t.Fatalf("Unexpected error: %v", err)
+	}
+
+	service := &models.Service{
+		Name:                    "Some Service",
+		PermissionName:          "SomeService",
+		CreatorServiceAccountID: sa.ID,
+		AMURL:                   "http://localhost:3333/am",
+	}
+
+	reqJson, err := json.Marshal(service)
+	if err != nil {
+		t.Fatalf("Unexpected error: %s", err.Error())
+	}
+
+	req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(reqJson))
+	req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
+
+	app := helpers.GetApp(t)
+	helpers.DoRequest(t, req, app.GetRouter())
+
+	servicesUC := helpers.GetServicesUseCase(t)
+	services, err := servicesUC.List()
+	if err != nil {
+		t.Fatalf("Unable to list Services, error %v", err)
+	}
+
+	savedService := services[0]
+	if savedService.Name != service.Name {
+		t.Errorf("Expected name %v, got %v", service.Name, savedService.Name)
+	}
+
+	if savedService.PermissionName != service.PermissionName {
+		t.Errorf("Expected permissionName %v, got %v", service.PermissionName, savedService.PermissionName)
+	}
+
+	if savedService.CreatorServiceAccountID != rootSA.ID {
+		t.Errorf("Expected CreatorServiceAccountID %v, got %v", rootSA.ID, savedService.CreatorServiceAccountID)
+	}
+
+	if savedService.AMURL != service.AMURL {
+		t.Errorf("Expected AMURL %v, got %v", service.AMURL, savedService.AMURL)
 	}
 }
 
