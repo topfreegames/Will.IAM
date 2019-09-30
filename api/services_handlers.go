@@ -107,7 +107,20 @@ func servicesUpdateHandler(
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		service := &models.Service{}
+
+		id := mux.Vars(r)["id"]
+		service, err := ssUC.WithContext(r.Context()).Get(id)
+		if err != nil {
+			l.Error(err)
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		// Service not found
+		if service.ID == "" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+
 		err = json.Unmarshal(body, service)
 		if err != nil {
 			l.WithError(err).Error("servicesUpdateHandler json.Unmarshal failed")
@@ -119,7 +132,6 @@ func servicesUpdateHandler(
 			WriteBytes(w, http.StatusUnprocessableEntity, v.Errors())
 			return
 		}
-		service.ID = mux.Vars(r)["id"]
 		if err := ssUC.WithContext(r.Context()).Update(service); err != nil {
 			l.WithError(err).Error("servicesUpdateHandler ssUC.Update failed")
 			w.WriteHeader(http.StatusInternalServerError)

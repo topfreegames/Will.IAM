@@ -185,7 +185,7 @@ func TestServicesGetHandler(t *testing.T) {
 		},
 		{
 			name:       "InvalidUUID",
-			id:         "o2206115-4f58-4d44-b200-5b227098070a",
+			id:         "x",
 			wantStatus: http.StatusNotFound,
 		},
 		{
@@ -248,10 +248,16 @@ func TestServicesUpdateHandler(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			name:       "EmptyJSON",
-			id:         service.ID,
-			json:       []byte("{}"),
-			wantStatus: http.StatusUnprocessableEntity,
+			name:       "InexistentID",
+			id:         "e6fee046-6045-45d2-b6f1-a21b82977782",
+			json:       validJson,
+			wantStatus: http.StatusNotFound,
+		},
+		{
+			name:       "InvalidUUID",
+			id:         "x",
+			json:       validJson,
+			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "MalformedJSON",
@@ -264,6 +270,12 @@ func TestServicesUpdateHandler(t *testing.T) {
 			id:         service.ID,
 			json:       invalidJson,
 			wantStatus: http.StatusUnprocessableEntity,
+		},
+		{
+			name:       "EmptyJSON",
+			id:         service.ID,
+			json:       []byte("{}"),
+			wantStatus: http.StatusOK,
 		},
 		{
 			name:       "ValidJSON",
