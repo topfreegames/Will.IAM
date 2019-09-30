@@ -111,7 +111,7 @@ func servicesUpdateHandler(
 		err = json.Unmarshal(body, service)
 		if err != nil {
 			l.WithError(err).Error("servicesUpdateHandler json.Unmarshal failed")
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
 		v := service.Validate()
