@@ -129,41 +129,41 @@ func TestPermissionsDeleteHandler(t *testing.T) {
 func TestPermissionsHasHandler(t *testing.T) {
 	beforeEachPermissionsHandlers(t)
 	type hasPermissionTest struct {
-		testName        string
-		request         string
-		expectedStatus  int
-		expectedMessage string
+		name        string
+		request     string
+		wantStatus  int
+		wantMessage string
 	}
 	testCases := []hasPermissionTest{
 		hasPermissionTest{
-			testName:        "MissingQueryString",
-			request:         "/permissions/has",
-			expectedStatus:  http.StatusUnprocessableEntity,
-			expectedMessage: `{"error": "querystrings.permission is required"}`,
+			name:        "MissingQueryString",
+			request:     "/permissions/has",
+			wantStatus:  http.StatusUnprocessableEntity,
+			wantMessage: `{"error": "querystrings.permission is required"}`,
 		},
 		hasPermissionTest{
-			testName:        "MissingPermissionQueryStringContent",
-			request:         "/permissions/has?permission=",
-			expectedStatus:  http.StatusUnprocessableEntity,
-			expectedMessage: `{"error": "Incomplete permission. Expected format: Service::OwnershipLevel::Action::{ResourceHierarchy}"}`,
+			name:        "MissingPermissionQueryStringContent",
+			request:     "/permissions/has?permission=",
+			wantStatus:  http.StatusUnprocessableEntity,
+			wantMessage: `{"error": "Incomplete permission. Expected format: Service::OwnershipLevel::Action::{ResourceHierarchy}"}`,
 		},
 		hasPermissionTest{
-			testName:        "WrongFormatPermissionQueryString",
-			request:         "/permissions/has?permission=X",
-			expectedStatus:  http.StatusUnprocessableEntity,
-			expectedMessage: `{"error": "Incomplete permission. Expected format: Service::OwnershipLevel::Action::{ResourceHierarchy}"}`,
+			name:        "WrongFormatPermissionQueryString",
+			request:     "/permissions/has?permission=X",
+			wantStatus:  http.StatusUnprocessableEntity,
+			wantMessage: `{"error": "Incomplete permission. Expected format: Service::OwnershipLevel::Action::{ResourceHierarchy}"}`,
 		},
 		hasPermissionTest{
-			testName:        "NotAuthorizedPermission",
-			request:         "/permissions/has?permission=Service::RL::TestAction::*",
-			expectedStatus:  http.StatusForbidden,
-			expectedMessage: "",
+			name:        "NotAuthorizedPermission",
+			request:     "/permissions/has?permission=Service::RL::TestAction::*",
+			wantStatus:  http.StatusForbidden,
+			wantMessage: "",
 		},
 		hasPermissionTest{
-			testName:        "AuthorizedPermission",
-			request:         "/permissions/has?permission=Service::RL::TestAction2::*",
-			expectedStatus:  http.StatusOK,
-			expectedMessage: "",
+			name:        "AuthorizedPermission",
+			request:     "/permissions/has?permission=Service::RL::TestAction2::*",
+			wantStatus:  http.StatusOK,
+			wantMessage: "",
 		},
 	}
 
@@ -171,7 +171,7 @@ func TestPermissionsHasHandler(t *testing.T) {
 	app := helpers.GetApp(t)
 
 	for _, testCase := range testCases {
-		t.Run(testCase.testName, func(t *testing.T) {
+		t.Run(testCase.name, func(t *testing.T) {
 			req, _ := http.NewRequest("GET", testCase.request, nil)
 			req.Header.Set("Authorization", fmt.Sprintf(
 				"KeyPair %s:%s", sa.KeyID, sa.KeySecret,
@@ -179,12 +179,12 @@ func TestPermissionsHasHandler(t *testing.T) {
 
 			rec := helpers.DoRequest(t, req, app.GetRouter())
 
-			if rec.Code != testCase.expectedStatus {
-				t.Errorf("Expected HTTP status %d. Got %d", testCase.expectedStatus, rec.Code)
+			if rec.Code != testCase.wantStatus {
+				t.Errorf("Expected HTTP status %d. Got %d", testCase.wantStatus, rec.Code)
 			}
 
-			if rec.Body.String() != testCase.expectedMessage {
-				t.Errorf("Expected response body %s. Got %s", testCase.expectedMessage, rec.Body)
+			if rec.Body.String() != testCase.wantMessage {
+				t.Errorf("Expected response body %s. Got %s", testCase.wantMessage, rec.Body)
 			}
 		})
 	}
