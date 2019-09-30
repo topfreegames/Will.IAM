@@ -4,6 +4,7 @@ package api_test
 
 import (
 	"fmt"
+	"github.com/topfreegames/Will.IAM/models"
 	"net/http"
 	"testing"
 
@@ -128,35 +129,63 @@ func TestPermissionsDeleteHandler(t *testing.T) {
 func TestPermissionsHasHandler(t *testing.T) {
 	beforeEachPermissionsHandlers(t)
 	type hasPermissionTest struct {
-		request        string
-		expectedStatus int
+		name        string
+		request     string
+		wantStatus  int
+		wantMessage string
 	}
-	tt := []hasPermissionTest{
+	testCases := []hasPermissionTest{
 		hasPermissionTest{
-			request:        "/permissions/has",
-			expectedStatus: http.StatusUnprocessableEntity,
+			name:        "MissingQueryString",
+			request:     "/permissions/has",
+			wantStatus:  http.StatusUnprocessableEntity,
+			wantMessage: `{"error": "querystrings.permission is required"}`,
 		},
 		hasPermissionTest{
-			request:        "/permissions/has?permission=Service::RL::TestAction::*",
-			expectedStatus: http.StatusForbidden,
+			name:        "MissingPermissionQueryStringContent",
+			request:     "/permissions/has?permission=",
+			wantStatus:  http.StatusUnprocessableEntity,
+			wantMessage: `{"error": "Incomplete permission. Expected format: Service::OwnershipLevel::Action::{ResourceHierarchy}"}`,
+		},
+		hasPermissionTest{
+			name:        "WrongFormatPermissionQueryString",
+			request:     "/permissions/has?permission=X",
+			wantStatus:  http.StatusUnprocessableEntity,
+			wantMessage: `{"error": "Incomplete permission. Expected format: Service::OwnershipLevel::Action::{ResourceHierarchy}"}`,
+		},
+		hasPermissionTest{
+			name:        "NotAuthorizedPermission",
+			request:     "/permissions/has?permission=Service::RL::TestAction::*",
+			wantStatus:  http.StatusForbidden,
+			wantMessage: "",
+		},
+		hasPermissionTest{
+			name:        "AuthorizedPermission",
+			request:     "/permissions/has?permission=Service::RL::TestAction2::*",
+			wantStatus:  http.StatusOK,
+			wantMessage: "",
 		},
 	}
 
-	saUC := helpers.GetServiceAccountsUseCase(t)
-	sa, err := saUC.CreateKeyPairType("some sa")
-	if err != nil {
-		t.Errorf("Unexpected error %s", err.Error())
-		return
-	}
+	sa := helpers.CreateServiceAccountWithPermissions(t, "sa", "sa@test.com", models.AuthenticationTypes.KeyPair, "Service::RL::TestAction2::*")
 	app := helpers.GetApp(t)
-	for _, tt := range tt {
-		req, _ := http.NewRequest("GET", tt.request, nil)
-		req.Header.Set("Authorization", fmt.Sprintf(
-			"KeyPair %s:%s", sa.KeyID, sa.KeySecret,
-		))
-		rec := helpers.DoRequest(t, req, app.GetRouter())
-		if rec.Code != tt.expectedStatus {
-			t.Errorf("Expected %d. Got %d", tt.expectedStatus, rec.Code)
-		}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			req, _ := http.NewRequest("GET", testCase.request, nil)
+			req.Header.Set("Authorization", fmt.Sprintf(
+				"KeyPair %s:%s", sa.KeyID, sa.KeySecret,
+			))
+
+			rec := helpers.DoRequest(t, req, app.GetRouter())
+
+			if rec.Code != testCase.wantStatus {
+				t.Errorf("Expected HTTP status %d. Got %d", testCase.wantStatus, rec.Code)
+			}
+
+			if rec.Body.String() != testCase.wantMessage {
+				t.Errorf("Expected response body %s. Got %s", testCase.wantMessage, rec.Body)
+			}
+		})
 	}
 }
