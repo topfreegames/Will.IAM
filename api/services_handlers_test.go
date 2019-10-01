@@ -116,12 +116,12 @@ func TestServicesCreateHandlerServicePersistence(t *testing.T) {
 		AMURL:                   "http://localhost:3333/am",
 	}
 
-	reqJson, err := json.Marshal(service)
+	reqJSON, err := json.Marshal(service)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
 
-	req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(reqJson))
+	req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(reqJSON))
 	req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
 
 	app := helpers.GetApp(t)
@@ -227,13 +227,13 @@ func TestServicesUpdateHandler(t *testing.T) {
 	}
 
 	service.Name = "Another name"
-	validJson, err := json.Marshal(service)
+	validJSON, err := json.Marshal(service)
 	if err != nil {
 		t.Fatalf("Error marshalling JSON: %v", err)
 	}
 
 	service.Name = ""
-	invalidJson, err := json.Marshal(service)
+	invalidJSON, err := json.Marshal(service)
 	if err != nil {
 		t.Fatalf("Error marshalling JSON: %v", err)
 	}
@@ -249,13 +249,13 @@ func TestServicesUpdateHandler(t *testing.T) {
 		{
 			name:       "InexistentID",
 			id:         "e6fee046-6045-45d2-b6f1-a21b82977782",
-			json:       validJson,
+			json:       validJSON,
 			wantStatus: http.StatusNotFound,
 		},
 		{
 			name:       "InvalidUUID",
 			id:         "x",
-			json:       validJson,
+			json:       validJSON,
 			wantStatus: http.StatusNotFound,
 		},
 		{
@@ -267,7 +267,7 @@ func TestServicesUpdateHandler(t *testing.T) {
 		{
 			name:       "InvalidJSON",
 			id:         service.ID,
-			json:       invalidJson,
+			json:       invalidJSON,
 			wantStatus: http.StatusUnprocessableEntity,
 		},
 		{
@@ -279,7 +279,7 @@ func TestServicesUpdateHandler(t *testing.T) {
 		{
 			name:       "ValidJSON",
 			id:         service.ID,
-			json:       validJson,
+			json:       validJSON,
 			wantStatus: http.StatusOK,
 		},
 	}
@@ -319,12 +319,11 @@ func TestServicesUpdateHandler_servicePersisted(t *testing.T) {
 	service.PermissionName = "AnotherPermission"
 	service.AMURL = "http://localhost:4444/am"
 
-	reqJson, err := json.Marshal(service)
+	reqJSON, err := json.Marshal(service)
 	if err != nil {
 		t.Fatalf("Unexpected error: %v", err)
 	}
-
-	req, _ := http.NewRequest("PUT", fmt.Sprintf("/services/%s", service.ID), bytes.NewBuffer(reqJson))
+	req, _ := http.NewRequest("PUT", fmt.Sprintf("/services/%s", service.ID), bytes.NewBuffer(reqJSON))
 	req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
 
 	app := helpers.GetApp(t)
