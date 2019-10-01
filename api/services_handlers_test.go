@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/kylelemons/godebug/pretty"
 	"github.com/topfreegames/Will.IAM/models"
 	helpers "github.com/topfreegames/Will.IAM/testing"
 )
@@ -88,15 +89,15 @@ func TestServicesCreateHandler(t *testing.T) {
 			req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(testCase.json))
 			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %v:%v", rootSA.KeyID, rootSA.KeySecret))
 
-			rec := helpers.DoRequest(t, req, app.GetRouter())
-			if rec.Code != testCase.wantStatus {
-				t.Fatalf("Expected %v got %v", testCase.wantStatus, rec.Code)
+			resp := helpers.DoRequest(t, req, app.GetRouter())
+			if resp.Code != testCase.wantStatus {
+				t.Fatalf("Code = %v, want %v", resp.Code, testCase.wantStatus)
 			}
 		})
 	}
 }
 
-func TestServicesCreateHandlerServicePersistence(t *testing.T) {
+func TestServicesCreateHandler_servicePersisted(t *testing.T) {
 	beforeEachServices(t)
 
 	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
@@ -106,7 +107,7 @@ func TestServicesCreateHandlerServicePersistence(t *testing.T) {
 		Email: "any@email.com",
 	}
 	if err := saUC.Create(sa); err != nil {
-		t.Fatalf("Unexpected error: %v", err)
+		t.Fatalf("Create() returned error = %v", err)
 	}
 
 	service := &models.Service{
@@ -118,36 +119,35 @@ func TestServicesCreateHandlerServicePersistence(t *testing.T) {
 
 	reqJSON, err := json.Marshal(service)
 	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
+		t.Fatalf("Marshal() returned error = %v", err)
 	}
 
 	req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(reqJSON))
 	req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
 
 	app := helpers.GetApp(t)
-	helpers.DoRequest(t, req, app.GetRouter())
+	resp := helpers.DoRequest(t, req, app.GetRouter())
+	if resp.Code != http.StatusCreated {
+		t.Fatalf("Code = %v, want %v", resp.Code, http.StatusCreated)
+	}
 
 	servicesUC := helpers.GetServicesUseCase(t)
 	services, err := servicesUC.List()
 	if err != nil {
-		t.Fatalf("Unable to list Services, error %v", err)
+		t.Fatalf("List() returned error = %v", err)
 	}
 
-	savedService := services[0]
-	if savedService.Name != service.Name {
-		t.Errorf("Expected name %v, got %v", service.Name, savedService.Name)
-	}
+	got := services[0]
+	want := service
+	// Fields set during Service creation
+	want.ID = got.ID
+	want.ServiceAccountID = got.ServiceAccountID
+	want.CreatedAt = got.CreatedAt
+	want.UpdatedAt = got.UpdatedAt
+	want.CreatorServiceAccountID = got.CreatorServiceAccountID
 
-	if savedService.PermissionName != service.PermissionName {
-		t.Errorf("Expected permissionName %v, got %v", service.PermissionName, savedService.PermissionName)
-	}
-
-	if savedService.CreatorServiceAccountID != rootSA.ID {
-		t.Errorf("Expected CreatorServiceAccountID %v, got %v", rootSA.ID, savedService.CreatorServiceAccountID)
-	}
-
-	if savedService.AMURL != service.AMURL {
-		t.Errorf("Expected AMURL %v, got %v", service.AMURL, savedService.AMURL)
+	if diff := pretty.Compare(got, want); diff != "" {
+		t.Errorf("%s: Services diff: (-got +want)\n%s", got, diff)
 	}
 }
 
@@ -164,7 +164,7 @@ func TestServicesGetHandler(t *testing.T) {
 	servicesUC := helpers.GetServicesUseCase(t)
 	err := servicesUC.Create(service)
 	if err != nil {
-		t.Fatalf("Error persisting Service = %v", service)
+		t.Fatalf("Create() returned error = %v", service)
 	}
 
 	testCases := []struct {
@@ -201,10 +201,10 @@ func TestServicesGetHandler(t *testing.T) {
 			req, _ := http.NewRequest("GET", fmt.Sprintf("/services/%s", testCase.id), bytes.NewBuffer([]byte("")))
 			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
 
-			rec := helpers.DoRequest(t, req, app.GetRouter())
+			resp := helpers.DoRequest(t, req, app.GetRouter())
 
-			if rec.Code != testCase.wantStatus {
-				t.Errorf("Want HTTP Status %v, got %v", testCase.wantStatus, rec.Code)
+			if resp.Code != testCase.wantStatus {
+				t.Errorf("HTTP Status = %v, want %v", resp.Code, testCase.wantStatus)
 			}
 		})
 	}
@@ -221,21 +221,20 @@ func TestServicesUpdateHandler(t *testing.T) {
 		AMURL:                   "http://localhost:3333/am",
 	}
 	servicesUC := helpers.GetServicesUseCase(t)
-	err := servicesUC.Create(service)
-	if err != nil {
-		t.Fatalf("Error persisting Service = %+v", service)
+	if err := servicesUC.Create(service); err != nil {
+		t.Fatalf("Create() returned error = %v", err)
 	}
 
 	service.Name = "Another name"
 	validJSON, err := json.Marshal(service)
 	if err != nil {
-		t.Fatalf("Error marshalling JSON: %v", err)
+		t.Fatalf("Marshal() returned error = %v", err)
 	}
 
 	service.Name = ""
 	invalidJSON, err := json.Marshal(service)
 	if err != nil {
-		t.Fatalf("Error marshalling JSON: %v", err)
+		t.Fatalf("Marshal() returned error = %v", err)
 	}
 
 	app := helpers.GetApp(t)
@@ -289,10 +288,9 @@ func TestServicesUpdateHandler(t *testing.T) {
 			req, _ := http.NewRequest("PUT", fmt.Sprintf("/services/%s", testCase.id), bytes.NewBuffer(testCase.json))
 			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
 
-			rec := helpers.DoRequest(t, req, app.GetRouter())
-
-			if rec.Code != testCase.wantStatus {
-				t.Errorf("Want HTTP Status %v, got %v", testCase.wantStatus, rec.Code)
+			resp := helpers.DoRequest(t, req, app.GetRouter())
+			if resp.Code != testCase.wantStatus {
+				t.Errorf("HTTP Status = %v, want %v", resp.Code, testCase.wantStatus)
 			}
 		})
 	}
@@ -311,7 +309,7 @@ func TestServicesUpdateHandler_servicePersisted(t *testing.T) {
 	servicesUC := helpers.GetServicesUseCase(t)
 	err := servicesUC.Create(service)
 	if err != nil {
-		t.Fatalf("Error persisting Service = %+v", service)
+		t.Fatalf("Create() returned error = %+v", service)
 	}
 
 	// Changes the data for testing
@@ -321,7 +319,7 @@ func TestServicesUpdateHandler_servicePersisted(t *testing.T) {
 
 	reqJSON, err := json.Marshal(service)
 	if err != nil {
-		t.Fatalf("Unexpected error: %v", err)
+		t.Fatalf("Marshal() returned error: %v", err)
 	}
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/services/%s", service.ID), bytes.NewBuffer(reqJSON))
 	req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
@@ -331,24 +329,16 @@ func TestServicesUpdateHandler_servicePersisted(t *testing.T) {
 
 	services, err := servicesUC.List()
 	if err != nil {
-		t.Fatalf("Unable to list Services, error %v", err)
+		t.Fatalf("List() returned error =  %v", err)
 	}
 
-	savedService := services[0]
-	if savedService.Name != "Another name" {
-		t.Errorf("Expected name %v, got %v", "Another name", savedService.Name)
-	}
+	got := services[0]
+	want := service
+	// Fields set during Service update
+	want.CreatedAt = got.CreatedAt
+	want.UpdatedAt = got.UpdatedAt
 
-	if savedService.PermissionName != "AnotherPermission" {
-		t.Errorf("Expected permissionName %v, got %v", "AnotherPermission", savedService.PermissionName)
+	if diff := pretty.Compare(got, want); diff != "" {
+		t.Errorf("%s: Services diff: (-got +want)\n%s", got, diff)
 	}
-
-	if savedService.CreatorServiceAccountID != rootSA.ID {
-		t.Errorf("Expected CreatorServiceAccountID %v, got %v", rootSA.ID, savedService.CreatorServiceAccountID)
-	}
-
-	if savedService.AMURL != "http://localhost:4444/am" {
-		t.Errorf("Expected AMURL %v, got %v", "http://localhost:4444/am", savedService.AMURL)
-	}
-
 }

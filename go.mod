@@ -14,6 +14,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
+	github.com/kylelemons/godebug v1.1.0
 	github.com/magiconair/properties v1.8.1 // indirect
 	github.com/ogier/pflag v0.0.1 // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect
