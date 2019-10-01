@@ -32,8 +32,7 @@ func TestServicesCreateHandler(t *testing.T) {
 		Email: "any@email.com",
 	}
 	if err := saUC.Create(sa); err != nil {
-		t.Errorf("Unexpected error: %s", err.Error())
-		return
+		t.Fatalf("Unexpected error: %v", err)
 	}
 
 	service := &models.Service{
@@ -87,7 +86,7 @@ func TestServicesCreateHandler(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(testCase.json))
-			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
+			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %v:%v", rootSA.KeyID, rootSA.KeySecret))
 
 			rec := helpers.DoRequest(t, req, app.GetRouter())
 			if rec.Code != testCase.wantStatus {
@@ -119,7 +118,7 @@ func TestServicesCreateHandlerServicePersistence(t *testing.T) {
 
 	reqJson, err := json.Marshal(service)
 	if err != nil {
-		t.Fatalf("Unexpected error: %s", err.Error())
+		t.Fatalf("Unexpected error: %v", err)
 	}
 
 	req, _ := http.NewRequest("POST", "/services", bytes.NewBuffer(reqJson))
@@ -322,7 +321,7 @@ func TestServicesUpdateHandler_servicePersisted(t *testing.T) {
 
 	reqJson, err := json.Marshal(service)
 	if err != nil {
-		t.Fatalf("Unexpected error: %s", err.Error())
+		t.Fatalf("Unexpected error: %v", err)
 	}
 
 	req, _ := http.NewRequest("PUT", fmt.Sprintf("/services/%s", service.ID), bytes.NewBuffer(reqJson))
