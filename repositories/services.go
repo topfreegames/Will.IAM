@@ -42,7 +42,7 @@ func (ss services) List() ([]models.Service, error) {
 	return allServices, nil
 }
 
-// Find a service by ID
+// Get finds a service by ID.
 func (ss services) Get(id string) (*models.Service, error) {
 	s := new(models.Service)
 	if _, err := ss.storage.PG.DB.Query(

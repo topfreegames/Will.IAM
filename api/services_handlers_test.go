@@ -50,14 +50,14 @@ func TestServicesCreateHandler(t *testing.T) {
 		AMURL:                   "http://localhost:3333/am",
 	}
 
-	validJson, err := json.Marshal(service)
+	validServiceJSON, err := json.Marshal(service)
 	if err != nil {
-		t.Fatalf("Unexpected error: %s", err.Error())
+		t.Fatalf("Marshal() returned err = %v", err)
 	}
 
-	invalidJson, err := json.Marshal(invalidService)
+	invalidServiceJSON, err := json.Marshal(invalidService)
 	if err != nil {
-		t.Fatalf("Unexpected error: %s", err.Error())
+		t.Fatalf("Marshal() returned err = %v", err)
 	}
 
 	testCases := []struct {
@@ -72,12 +72,12 @@ func TestServicesCreateHandler(t *testing.T) {
 		},
 		{
 			name:       "InvalidJSON",
-			json:       invalidJson,
+			json:       invalidServiceJSON,
 			wantStatus: http.StatusUnprocessableEntity,
 		},
 		{
 			name:       "ValidJSON",
-			json:       validJson,
+			json:       validServiceJSON,
 			wantStatus: http.StatusCreated,
 		},
 	}
@@ -299,7 +299,7 @@ func TestServicesUpdateHandler(t *testing.T) {
 	}
 }
 
-func TestServicesUpdateHandlerServicePersistence(t *testing.T) {
+func TestServicesUpdateHandler_servicePersisted(t *testing.T) {
 	beforeEachServices(t)
 
 	rootSA := helpers.CreateRootServiceAccountWithKeyPair(t, "rootSAKeyPair", "rootSAKeyPair@test.com")
