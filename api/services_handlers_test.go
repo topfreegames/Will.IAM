@@ -202,7 +202,6 @@ func TestServicesGetHandler(t *testing.T) {
 			req.Header.Set("Authorization", fmt.Sprintf("KeyPair %s:%s", rootSA.KeyID, rootSA.KeySecret))
 
 			resp := helpers.DoRequest(t, req, app.GetRouter())
-
 			if resp.Code != testCase.wantStatus {
 				t.Errorf("HTTP Status = %v, want %v", resp.Code, testCase.wantStatus)
 			}
