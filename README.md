@@ -1,5 +1,7 @@
 # Will.IAM
 
+[![Build Status](https://travis-ci.com/gerson-scanapieco/Will.IAM.svg?branch=master)](https://travis-ci.com/gerson-scanapieco/Will.IAM.svg?branch=master)
+
 Will.IAM solves identity and access management.
 
 * Authentication with Google as OAUTH-2 provider.

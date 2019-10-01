@@ -1,0 +1,13 @@
+language: go
+go:
+- "1.13"
+services:
+- docker
+cache:
+  directories:
+  - "$GOPATH/pkg"
+sudo: true
+script:
+- make test
+
+
