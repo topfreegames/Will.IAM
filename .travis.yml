@@ -7,7 +7,7 @@ cache:
   directories:
   - "$GOPATH/pkg"
 sudo: true
+install:
+- make setup-ci
 script:
 - make test
-
-

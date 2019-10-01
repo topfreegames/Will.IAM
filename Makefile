@@ -8,6 +8,7 @@ test_packages=`find . -type d -name "docker_data" -prune -o \
 database=postgres://postgres:$(project)@localhost:8432/$(project)?sslmode=disable
 database_test=postgres://postgres:$(project)@localhost:8432/$(project_test)?sslmode=disable
 platform=darwin
+ci_platform=linux
 
 export GO111MODULE=on
 
@@ -24,6 +25,10 @@ setup-deps:
 setup-migrate:
 	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(platform)-amd64.tar.gz | tar xvz
 	@mv migrate.$(platform)-amd64 /usr/local/bin/migrate
+
+setup-ci:
+	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(ci_platform)-amd64.tar.gz | tar xvz
+	@mv migrate.$(ci_platform)-amd64 ~/gopath/bin/migrate
 
 deps:
 	@mkdir -p docker_data && docker-compose up -d postgres
