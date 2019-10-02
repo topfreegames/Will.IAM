@@ -10,6 +10,6 @@ sudo: true
 before_install:
 - go get github.com/mattn/goveralls
 install:
-- make setup-ci
+- make all-ci
 script:
 - make test-ci
