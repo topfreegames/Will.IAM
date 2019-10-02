@@ -16,6 +16,7 @@ require (
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/kylelemons/godebug v1.1.0
 	github.com/magiconair/properties v1.8.1 // indirect
+	github.com/mattn/goveralls v0.0.3 // indirect
 	github.com/ogier/pflag v0.0.1 // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
@@ -36,5 +37,6 @@ require (
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4 // indirect
 	golang.org/x/net v0.0.0-20190628185345-da137c7871d7 // indirect
 	golang.org/x/sys v0.0.0-20190626221950-04f50cda93cb // indirect
+	golang.org/x/tools v0.0.0-20191001184121-329c8d646ebe // indirect
 	mellium.im/sasl v0.2.1 // indirect
 )

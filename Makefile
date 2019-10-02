@@ -15,20 +15,25 @@ export GO111MODULE=on
 setup: setup-project setup-deps
 
 setup-project:
+	@echo "Setup project..."
 	@go mod download
 
 setup-deps:
 	@make deps
 	@make migrate
 
+setup-ci:
+	@echo "Setup CI..."
+	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(ci_platform)-amd64.tar.gz | tar xvz
+	@mv migrate.$(ci_platform)-amd64 ~/gopath/bin/migrate
+	@make setup-project
+	@make deps-test
+	@make migrate-test
+
 # run this if you don't have migrate
 setup-migrate:
 	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(platform)-amd64.tar.gz | tar xvz
 	@mv migrate.$(platform)-amd64 /usr/local/bin/migrate
-
-setup-ci:
-	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(ci_platform)-amd64.tar.gz | tar xvz
-	@mv migrate.$(ci_platform)-amd64 ~/gopath/bin/migrate
 
 deps:
 	@mkdir -p docker_data && docker-compose up -d postgres
@@ -37,12 +42,16 @@ deps:
 	@docker exec $(pg_dep) createdb -U $(project) $(project) 2>/dev/null || true
 
 deps-test:
+	@echo "Deps test..."
 	@mkdir -p docker_data && docker-compose up -d postgres
 	@until docker exec $(pg_dep) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
 	@sleep 2
+	@echo "Creating DB User..."
 	@docker exec $(pg_dep) createuser -s -U postgres $(project) 2>/dev/null || true
+	@echo "DB User created"
+	@echo "Creating Database: $(project_test)..."
 	@docker exec $(pg_dep) createdb -U $(project) $(project_test) 2>/dev/null || true
-	@make migrate-test
+	@echo "Database created"
 
 stop-deps:
 	@docker-compose down
@@ -88,6 +97,12 @@ unit:
 	@go test ${testable_packages} -tags=unit -coverprofile unit.coverprofile -v
 	@make gather-unit-profiles
 
+test-ci:
+	@echo "Test CI"...
+	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v
+	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v
+	@goveralls -coverprofile=coverage.out -service=travis-ci -repotoken ${COVERALLS_TOKEN}
+
 integration:
 	@echo "Integration Tests"
 	@ret=0 && for pkg in ${testable_packages}; do \
@@ -114,3 +129,4 @@ gather-integration-profiles:
 		do tail -n +2 $$f >> _build/coverage-integration.out; done'
 	@find . -type d -name "docker_data" -prune -o \
 		-name "*.coverprofile" -exec rm {} +
+
