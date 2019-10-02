@@ -52,6 +52,7 @@ deps-test:
 	@echo "Creating Database: $(project_test)..."
 	@docker exec $(pg_dep) createdb -U $(project) $(project_test) 2>/dev/null || true
 	@echo "Database created"
+	@make migrate-test
 
 stop-deps:
 	@docker-compose down
@@ -99,8 +100,8 @@ unit:
 
 test-ci:
 	@echo "Test CI"...
-	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v
-	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v
+	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v -p 1
+	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v -p 1
 	@goveralls -coverprofile=coverage.out -service=travis-ci -repotoken ${COVERALLS_TOKEN}
 
 integration:
