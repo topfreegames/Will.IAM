@@ -9,6 +9,7 @@ database=postgres://postgres:$(project)@localhost:8432/$(project)?sslmode=disabl
 database_test=postgres://postgres:$(project)@localhost:8432/$(project_test)?sslmode=disable
 platform=darwin
 ci_platform=linux
+pg_docker_image=$(project)_postgres_1
 
 export GO111MODULE=on
 
@@ -25,7 +26,7 @@ setup-deps:
 setup-ci:
 	@echo "Setup CI..."
 	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(ci_platform)-amd64.tar.gz | tar xvz
-	@mv migrate.$(ci_platform)-amd64 ~/gopath/bin/migrate
+	@mv migrate.$(ci_platform)-amd64 ${GOPATH}/bin/migrate
 	@make setup-project
 	@make deps-test
 	@make migrate-test
@@ -52,6 +53,7 @@ deps-test:
 	@echo "Creating Database: $(project_test)..."
 	@docker exec $(pg_dep) createdb -U $(project) $(project_test) 2>/dev/null || true
 	@echo "Database created"
+	@sleep 2
 	@make migrate-test
 
 stop-deps:
@@ -99,10 +101,12 @@ unit:
 	@make gather-unit-profiles
 
 test-ci:
-	@echo "Test CI"...
+	@echo "Unit Tests - START"
 	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v -p 1
+	@echo "Unit Tests - DONE"
+	@echo "Integration Tests - START"
 	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v -p 1
-	@echo "Coverall ${COVERALLS_TOKEN}"
+	@echo "Integration Tests - DONE"
 	@goveralls -coverprofile=coverage.out -service=travis-ci -repotoken ${COVERALLS_TOKEN}
 
 integration:
