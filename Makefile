@@ -102,6 +102,7 @@ test-ci:
 	@echo "Test CI"...
 	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v -p 1
 	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v -p 1
+	@echo "Coverall ${COVERALLS_TOKEN}"
 	@goveralls -coverprofile=coverage.out -service=travis-ci -repotoken ${COVERALLS_TOKEN}
 
 integration:
