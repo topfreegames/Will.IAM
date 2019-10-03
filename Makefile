@@ -79,7 +79,7 @@ db-create:
 
 .PHONY: db-create-test
 db-create-test:
-	@docker exec $(pg_docker_image) createdb -U $(project) $(project_test) 2>/dev/null || true
+	@docker exec $(pg_docker_image) createdb -U $(project) $(test_db_name) 2>/dev/null || true
 	@sleep 2
 
 .PHONY: db-stop-test
