@@ -52,7 +52,7 @@ type william struct {
 	client HttpClient
 }
 
-// New create a new william client
+// New creates a new Will.IAM client
 func New(baseURL, serviceName string) William {
 	wi := &william{
 		baseURL:     baseURL,
