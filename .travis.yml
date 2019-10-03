@@ -13,3 +13,5 @@ install:
 - make all-ci
 script:
 - make test-ci
+after_success:
+- goveralls -coverprofile=coverage.out -service=travis-ci

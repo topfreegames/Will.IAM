@@ -125,7 +125,6 @@ test-ci:
 	@echo "Integration Tests - START"
 	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v -p 1
 	@echo "Integration Tests - DONE"
-	@goveralls -coverprofile=coverage.out -service=travis-ci -repotoken ${COVERALLS_TOKEN}
 
 .PHONY: gather-unit-profiles
 gather-unit-profiles:
