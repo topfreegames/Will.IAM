@@ -137,17 +137,18 @@ func TestServicesCreateHandler_servicePersisted(t *testing.T) {
 		t.Fatalf("List() returned error = %v", err)
 	}
 
-	got := services[0]
-	want := service
+	gotService := services[0]
+	wantService := service
 	// Fields set during Service creation
-	want.ID = got.ID
-	want.ServiceAccountID = got.ServiceAccountID
-	want.CreatedAt = got.CreatedAt
-	want.UpdatedAt = got.UpdatedAt
-	want.CreatorServiceAccountID = got.CreatorServiceAccountID
+	wantService.ID = gotService.ID
+	wantService.ServiceAccountID = gotService.ServiceAccountID
+	wantService.CreatedAt = gotService.CreatedAt
+	wantService.UpdatedAt = gotService.UpdatedAt
+	wantService.CreatorServiceAccountID = gotService.CreatorServiceAccountID
+	want := []models.Service{*wantService}
 
-	if diff := pretty.Compare(got, want); diff != "" {
-		t.Errorf("%s: Services diff: (-got +want)\n%s", got, diff)
+	if diff := pretty.Compare(services, want); diff != "" {
+		t.Errorf("%s: Services diff: (-got +want)\n%s", services, diff)
 	}
 }
 
@@ -331,13 +332,14 @@ func TestServicesUpdateHandler_servicePersisted(t *testing.T) {
 		t.Fatalf("List() returned error =  %v", err)
 	}
 
-	got := services[0]
-	want := service
+	gotService := services[0]
+	wantService := service
 	// Fields set during Service update
-	want.CreatedAt = got.CreatedAt
-	want.UpdatedAt = got.UpdatedAt
+	wantService.CreatedAt = gotService.CreatedAt
+	wantService.UpdatedAt = gotService.UpdatedAt
+	want := []models.Service{*wantService}
 
-	if diff := pretty.Compare(got, want); diff != "" {
-		t.Errorf("%s: Services diff: (-got +want)\n%s", got, diff)
+	if diff := pretty.Compare(services, want); diff != "" {
+		t.Errorf("%s: Services diff: (-got +want)\n%s", services, diff)
 	}
 }
