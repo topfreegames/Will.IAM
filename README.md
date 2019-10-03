@@ -1,7 +1,8 @@
 # Will.IAM
 
-[![Build Status](https://travis-ci.com/gerson-scanapieco/Will.IAM.svg?branch=master)](https://travis-ci.com/gerson-scanapieco/Will.IAM.svg?branch=master)
-[![Coverage Status](https://coveralls.io/repos/github/gerson-scanapieco/Will.IAM/badge.svg?branch=master)](https://coveralls.io/github/gerson-scanapieco/Will.IAM?branch=master)
+[![Build Status](https://travis-ci.org/topfreegames/Will.IAM.svg?branch=master)](https://travis-ci.org/topfreegames/Will.IAM.svg?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/topfreegames/Will.IAM/badge.svg?branch=master)](https://coveralls.io/github/topfreegames/Will.IAM?branch=master)
+
 Will.IAM solves identity and access management.
 
 * Authentication with Google as OAUTH-2 provider.
