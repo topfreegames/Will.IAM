@@ -2,17 +2,16 @@ testable_packages=$(shell go list ./... | egrep -v 'constants|mocks|testing')
 project=$(shell basename $(PWD))
 test_db_name=${project}-test
 pg_docker_image=$(project)_postgres_1
-test_packages=`find . -type d -name "docker_data" -prune -o \
-							-type f -name "*.go" ! \( -path "*vendor*" \) -print \
-							| sed -En "s/([^\.])\/.*/\1/p" | uniq`
-database=postgres://postgres:$(project)@localhost:8432/$(project)?sslmode=disable
-database_test=postgres://postgres:$(project)@localhost:8432/$(project_test)?sslmode=disable
-pg_docker_image=$(project)_postgres_1
 db_url=postgres://postgres:$(project)@localhost:8432/$(project)?sslmode=disable
 db_test_url=postgres://postgres:$(project)@localhost:8432/$(test_db_name)?sslmode=disable
+uname_S=$(shell uname -s)
 
 # TravisCI runs in Linux instances, while developers run in MacOS machines
-platform=`[ -z $TRAVIS_OS_NAME ] && echo "linux" || echo "darwin"`
+ifeq ($(uname_S), Darwin)
+  platform := darwin
+else
+  platform := linux
+endif
 
 export GO111MODULE=on
 
@@ -37,9 +36,10 @@ run:
 .PHONY: test
 test: db-setup-test test-unit test-integration db-stop-test
 
-.PHONY: setup-migrate
 # Installs the golang-migrate dependency if its not already installed.
+.PHONY: setup-migrate
 setup-migrate:
+	@echo "Platform: ${platform}"
 ifeq ($(shell command -v migrate),)
 	@echo "Installing migrate..."
 	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(platform)-amd64.tar.gz | tar xvz
