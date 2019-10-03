@@ -6,12 +6,11 @@ services:
 cache:
   directories:
   - "$GOPATH/pkg"
-sudo: true
 before_install:
 - go get github.com/mattn/goveralls
 install:
-- make all-ci
+- make ci/install
 script:
-- make test-ci
+- make ci/test
 after_success:
 - goveralls -coverprofile=coverage.out -service=travis-ci

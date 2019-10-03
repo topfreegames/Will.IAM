@@ -13,20 +13,18 @@ else
   platform := linux
 endif
 
-export GO111MODULE=on
-
 .PHONY: all
-all: setup-migrate download-mod db-setup
+all: setup/migrate download-mod db/setup
 
-.PHONY: all-ci
-all-ci: setup-migrate download-mod db-setup-test
+.PHONY: ci/install
+ci/install: setup/migrate download-mod db/setup-test
 
 .PHONY: build
 build:
 	@mkdir -p bin && go build -o ./bin/$(project) .
 
-.PHONY: build-docker
-build-docker:
+.PHONY: docker/build
+docker/build:
 	@docker build -t $(project) .
 
 .PHONY: run
@@ -34,12 +32,11 @@ run:
 	@reflex -c reflex.conf -- sh -c ./bin/Will.IAM start-api
 
 .PHONY: test
-test: db-setup-test test-unit test-integration db-stop-test
+test: db/setup-test test/unit test/integration db/stop-test
 
 # Installs the golang-migrate dependency if its not already installed.
-.PHONY: setup-migrate
-setup-migrate:
-	@echo "Platform: ${platform}"
+.PHONY: setup/migrate
+setup/migrate:
 ifeq ($(shell command -v migrate),)
 	@echo "Installing migrate..."
 	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(platform)-amd64.tar.gz | tar xvz
@@ -57,58 +54,58 @@ download-mod:
 compose-down:
 	@docker-compose down
 
-.PHONY: db-setup
-db-setup: db-up db-create-user db-create db-migrate
+.PHONY: db/setup
+db/setup: db/up db/create-user db/create db/migrate
 
-.PHONY: db-setup-test
-db-setup-test: db-up db-create-user db-create-test db-migrate-test
+.PHONY: db/setup-test
+db/setup-test: db/up db/create-user db/create-test db/migrate-test
 
-.PHONY: db-up
-db-up:
+.PHONY: db/up
+db/up:
 	@mkdir -p docker_data && docker-compose up -d postgres
 	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
 	@sleep 2
 
-.PHONY: db-create-user
-db-create-user:
+.PHONY: db/create-user
+db/create-user:
 	@docker exec $(pg_docker_image) createuser -s -U postgres $(project) 2>/dev/null || true
 
-.PHONY: db-create
-db-create:
+.PHONY: db/create
+db/create:
 	@docker exec $(pg_docker_image) createdb -U $(project) $(project) 2>/dev/null || true
 
-.PHONY: db-create-test
-db-create-test:
+.PHONY: db/create-test
+db/create-test:
 	@docker exec $(pg_docker_image) createdb -U $(project) $(test_db_name) 2>/dev/null || true
 	@sleep 2
 
-.PHONY: db-stop-test
-db-stop-test: db-drop-test compose-down
+.PHONY: db/stop-test
+db/stop-test: db/drop-test compose-down
 
-.PHONY: db-drop-test
-db-drop-test:
+.PHONY: db/drop-test
+db/drop-test:
 	@migrate -path migrations -database ${db_test_url} drop
 
-.PHONY: db-migrate
-db-migrate:
+.PHONY: db/migrate
+db/migrate:
 	@migrate -path migrations -database ${db_url} up
 
-.PHONY: db-migrate-test
-db-migrate-test:
+.PHONY: db/migrate-test
+db/migrate-test:
 	@migrate -path migrations -database ${db_test_url} up
 
 .PHONY: db-drop
 db-drop:
 	@migrate -path migrations -database ${db_url} drop
 
-.PHONY: test-unit
-test-unit:
+.PHONY: test/unit
+test/unit:
 	@echo "Unit Tests"
 	@go test ${testable_packages} -tags=unit -coverprofile unit.coverprofile -v
 	@make gather-unit-profiles
 
-.PHONY: test-integration
-test-integration:
+.PHONY: test/integration
+test/integration:
 	@echo "Integration Tests"
 	@ret=0 && for pkg in ${testable_packages}; do \
 		echo $$pkg; \
@@ -117,8 +114,8 @@ test-integration:
 	done; exit $$ret
 	@make gather-integration-profiles
 
-.PHONY: test-ci
-test-ci:
+.PHONY: ci/test
+ci/test:
 	@echo "Unit Tests - START"
 	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v -p 1
 	@echo "Unit Tests - DONE"
