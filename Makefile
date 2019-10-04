@@ -13,6 +13,9 @@ else
   platform := linux
 endif
 
+# TODO(gerson-scanapieco): Pass arguments to make targets to reduce duplication, e.g. db/create and db/create-test
+# becoming make db/create DB_URL=...
+
 .PHONY: all
 all: setup/migrate download-mod db/setup
 
