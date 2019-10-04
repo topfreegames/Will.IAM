@@ -1,88 +1,114 @@
 testable_packages=$(shell go list ./... | egrep -v 'constants|mocks|testing')
 project=$(shell basename $(PWD))
-project_test=${project}-test
-pg_dep=$(project)_postgres_1
-test_packages=`find . -type d -name "docker_data" -prune -o \
-							-type f -name "*.go" ! \( -path "*vendor*" \) -print \
-							| sed -En "s/([^\.])\/.*/\1/p" | uniq`
-database=postgres://postgres:$(project)@localhost:8432/$(project)?sslmode=disable
-database_test=postgres://postgres:$(project)@localhost:8432/$(project_test)?sslmode=disable
-platform=darwin
+test_db_name=${project}-test
+pg_docker_image=$(project)_postgres_1
+db_url=postgres://postgres:$(project)@localhost:8432/$(project)?sslmode=disable
+db_test_url=postgres://postgres:$(project)@localhost:8432/$(test_db_name)?sslmode=disable
+uname_S=$(shell uname -s)
 
-export GO111MODULE=on
+# TravisCI runs in Linux instances, while developers run in MacOS machines
+ifeq ($(uname_S), Darwin)
+  platform := darwin
+else
+  platform := linux
+endif
 
-setup: setup-project setup-deps
+# TODO(gerson-scanapieco): Pass arguments to make targets to reduce duplication, e.g. db/create and db/create-test
+# becoming make db/create DB_URL=...
 
-setup-project:
-	@go mod download
+.PHONY: all
+all: setup/migrate download-mod db/setup
 
-setup-deps:
-	@make deps
-	@make migrate
+.PHONY: ci/install
+ci/install: setup/migrate download-mod db/setup-test
 
-# run this if you don't have migrate
-setup-migrate:
-	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(platform)-amd64.tar.gz | tar xvz
-	@mv migrate.$(platform)-amd64 /usr/local/bin/migrate
-
-deps:
-	@mkdir -p docker_data && docker-compose up -d postgres
-	@until docker exec $(pg_dep) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
-	@docker exec $(pg_dep) createuser -s -U postgres $(project) 2>/dev/null || true
-	@docker exec $(pg_dep) createdb -U $(project) $(project) 2>/dev/null || true
-
-deps-test:
-	@mkdir -p docker_data && docker-compose up -d postgres
-	@until docker exec $(pg_dep) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
-	@docker exec $(pg_dep) createuser -s -U postgres $(project) 2>/dev/null || true
-	@docker exec $(pg_dep) createdb -U $(project) $(project_test) 2>/dev/null || true
-	@make migrate-test
-
-stop-deps:
-	@docker-compose down
-
-stop-deps-test:
-	@make drop-test
-	@make stop-deps
-
+.PHONY: build
 build:
 	@mkdir -p bin && go build -o ./bin/$(project) .
 
-build-docker:
+.PHONY: docker/build
+docker/build:
 	@docker build -t $(project) .
 
+.PHONY: run
 run:
 	@reflex -c reflex.conf -- sh -c ./bin/Will.IAM start-api
 
-migrate:
-	@migrate -path migrations -database ${database} up
+.PHONY: test
+test: db/setup-test test/unit test/integration db/stop-test
 
-migrate-test:
-	@migrate -path migrations -database ${database_test} up
+# Installs the golang-migrate dependency if its not already installed.
+.PHONY: setup/migrate
+setup/migrate:
+ifeq ($(shell command -v migrate),)
+	@echo "Installing migrate..."
+	@curl -L https://github.com/golang-migrate/migrate/releases/download/v4.4.0/migrate.$(platform)-amd64.tar.gz | tar xvz
+	@mv migrate.$(platform)-amd64 $(GOPATH)/bin/migrate
+	@echo "Done"
+else
+	@echo "migrate is already installed. Skipping..."
+endif
 
-drop:
-	@migrate -path migrations -database ${database} drop
+.PHONY: download-mod
+download-mod:
+	@go mod download
 
-drop-test:
-	@migrate -path migrations -database ${database_test} drop
+.PHONY: compose-down
+compose-down:
+	@docker-compose down
 
-test:
-	@make deps-test
-	@make test-fast
-	@make stop-deps-test
+.PHONY: db/setup
+db/setup: db/up db/create-user db/create db/migrate
 
-test-fast:
-	@make migrate-test
-	@make unit
-	@make integration
-	@make drop-test
+.PHONY: db/setup-test
+db/setup-test: db/up db/create-user db/create-test db/migrate-test
 
-unit:
+.PHONY: db/up
+db/up:
+	@mkdir -p docker_data && docker-compose up -d postgres
+	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
+	@sleep 2
+
+.PHONY: db/create-user
+db/create-user:
+	@docker exec $(pg_docker_image) createuser -s -U postgres $(project) 2>/dev/null || true
+
+.PHONY: db/create
+db/create:
+	@docker exec $(pg_docker_image) createdb -U $(project) $(project) 2>/dev/null || true
+
+.PHONY: db/create-test
+db/create-test:
+	@docker exec $(pg_docker_image) createdb -U $(project) $(test_db_name) 2>/dev/null || true
+	@sleep 2
+
+.PHONY: db/stop-test
+db/stop-test: db/drop-test compose-down
+
+.PHONY: db/drop-test
+db/drop-test:
+	@migrate -path migrations -database ${db_test_url} drop
+
+.PHONY: db/migrate
+db/migrate:
+	@migrate -path migrations -database ${db_url} up
+
+.PHONY: db/migrate-test
+db/migrate-test:
+	@migrate -path migrations -database ${db_test_url} up
+
+.PHONY: db-drop
+db-drop:
+	@migrate -path migrations -database ${db_url} drop
+
+.PHONY: test/unit
+test/unit:
 	@echo "Unit Tests"
 	@go test ${testable_packages} -tags=unit -coverprofile unit.coverprofile -v
 	@make gather-unit-profiles
 
-integration:
+.PHONY: test/integration
+test/integration:
 	@echo "Integration Tests"
 	@ret=0 && for pkg in ${testable_packages}; do \
 		echo $$pkg; \
@@ -91,6 +117,16 @@ integration:
 	done; exit $$ret
 	@make gather-integration-profiles
 
+.PHONY: ci/test
+ci/test:
+	@echo "Unit Tests - START"
+	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v -p 1
+	@echo "Unit Tests - DONE"
+	@echo "Integration Tests - START"
+	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v -p 1
+	@echo "Integration Tests - DONE"
+
+.PHONY: gather-unit-profiles
 gather-unit-profiles:
 	@mkdir -p _build
 	@echo "mode: count" > _build/coverage-unit.out
@@ -100,6 +136,7 @@ gather-unit-profiles:
 	@find . -type d -name "docker_data" -prune -o \
 		-name "*.coverprofile" -exec rm {} +
 
+.PHONY: gather-integration-profiles
 gather-integration-profiles:
 	@mkdir -p _build
 	@echo "mode: count" > _build/coverage-integration.out
@@ -108,3 +145,4 @@ gather-integration-profiles:
 		do tail -n +2 $$f >> _build/coverage-integration.out; done'
 	@find . -type d -name "docker_data" -prune -o \
 		-name "*.coverprofile" -exec rm {} +
+

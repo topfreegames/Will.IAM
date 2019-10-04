@@ -1,5 +1,9 @@
 # Will.IAM
 
+[![Build Status](https://travis-ci.org/topfreegames/Will.IAM.svg?branch=master)](https://travis-ci.org/topfreegames/Will.IAM)
+[![Coverage Status](https://coveralls.io/repos/github/topfreegames/Will.IAM/badge.svg?branch=master)](https://coveralls.io/github/topfreegames/Will.IAM?branch=master)
+[![Maintainability](https://api.codeclimate.com/v1/badges/d89ff8b1c3a43d13e040/maintainability)](https://codeclimate.com/github/topfreegames/Will.IAM/maintainability)
+
 Will.IAM solves identity and access management.
 
 * Authentication with Google as OAUTH-2 provider.
