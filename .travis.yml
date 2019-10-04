@@ -1,16 +1,29 @@
 language: go
-go:
-- '1.13'
-services:
-- docker
-cache:
-  directories:
-  - "$GOPATH/pkg"
-before_install:
-- go get github.com/mattn/goveralls
-install:
-- make ci/install
-script:
-- make ci/test
-after_success:
-- goveralls -coverprofile=coverage.out -service=travis-ci
+
+go: '1.13'
+
+jobs:
+  include:
+    - stage: "Tests"
+      cache:
+        directories:
+          - "$GOPATH/pkg"
+      services:
+      - docker
+      before_install:
+      - go get github.com/mattn/goveralls
+      install:
+      - make ci/install
+      after_success:
+      - goveralls -coverprofile=coverage.out -service=travis-ci
+      name: "Unit tests"
+      script:
+      - make ci/test/unit
+    - script:
+      - make ci/test/integration
+      name: "Integration tests"
+    - stage: deploy
+      if: branch = master AND type = push
+      services: docker
+      script:
+      - push_to_docker.sh
