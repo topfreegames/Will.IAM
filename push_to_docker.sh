@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -eu.
+set -euo pipefail
 
 # The image build step occurs only when a build is triggered by a commit being merged into the "master" branch.
 # Given that the "master" branch is protected, the only way to trigger a build from the "master" branch is when a PR
