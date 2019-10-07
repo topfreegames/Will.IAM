@@ -23,7 +23,5 @@ docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 docker build -t will-iam .
 docker tag will-iam "$DOCKER_HUB_REPO":"$LAST_COMMIT_SHA"
 docker tag will-iam "$DOCKER_HUB_REPO":"$VERSION"
-docker tag will-iam "$DOCKER_HUB_REPO":latest
 docker push "$DOCKER_HUB_REPO":"$LAST_COMMIT_SHA"
 docker push "$DOCKER_HUB_REPO":"$VERSION"
-docker push "$DOCKER_HUB_REPO":latest
