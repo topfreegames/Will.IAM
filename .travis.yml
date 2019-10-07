@@ -4,7 +4,7 @@ go: '1.13'
 
 jobs:
   include:
-    - stage: "Tests"
+    - stage: test
       cache:
         directories:
           - "$GOPATH/pkg"
