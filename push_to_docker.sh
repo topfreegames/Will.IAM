@@ -5,6 +5,7 @@ set -eu.
 # The image build step occurs only when a build is triggered by a commit being merged into the "master" branch.
 # Given that the "master" branch is protected, the only way to trigger a build from the "master" branch is when a PR
 # is merged into it. This way, we avoid storing images from non-stable branches.
+LAST_COMMIT_SHA=$(git rev-parse --short HEAD)
 DOCKER_HUB_REPO="https://registry.hub.docker.com/v1/repositories/tfgco/will-iam/tags"
 VERSION=$(cat version.txt)
 VERSION_REGEX="^$VERSION$"
@@ -23,7 +24,9 @@ fi
 docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
 
 docker build -t will-iam .
+docker tag will-iam:latest tfgco/will-iam:"$LAST_COMMIT_SHA"
 docker tag will-iam:latest tfgco/will-iam:"$VERSION"
 docker tag will-iam:latest tfgco/will-iam:latest
+docker push tfgco/will-iam:"$LAST_COMMIT_SHA"
 docker push tfgco/will-iam:"$VERSION"
 docker push tfgco/will-iam:latest
