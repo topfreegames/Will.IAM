@@ -15,20 +15,6 @@ Will.IAM solves identity and access management.
 
   Client redirects to server (browser), server has token in localStorage, redirects back with stored token. No button clicks :) Client should be careful to not log token to other parties (e.g google analytics)
 
-## TODO:
-
-### major
-
-* [ ] Reorganize pkg errors, fill errors/codes.go to keep track of all codes
-* [ ] Revisit errors to return 4xx where it makes sense. (Most places return 500)
-
-### minor
-
-* [ ] Replace %s + err.Error() by %v + err
-* [ ] Replace t.Errorf + return by t.Fatalf where it should stop early
-* [ ] Use api.ErrorResponse in other places
-* [ ] Use api.ListResponse in other places
-
 ## About RBAC use cases and implementation
 
 Client projects of Will.IAM define permissions necessary for resource operation.
@@ -95,8 +81,55 @@ When calling GET /am?prefix={complete-permission-here} your server should respon
 
 When an unauthorized request is made, a response with `{ "permission": {string}, "alias": {string} }` is expected.
 
+### The CI/CD pipeline
+
+Will.IAM has a very simple CI/CD pipeline in place to help us guarantee that the code have a good quality and avoid broken releases.
+Currently we use TravisCI to automate the execution of tests, code quality tools and generation and publishing of images in our 
+[Docker Hub repository](https://hub.docker.com/r/tfgco/will-iam). The Pipeline works as follows:
+
+![](ci_pipeline.jpg)
+
+### Issuing new releases
+
+Versioning happens through the `version.txt` file, which stores the project's current version.
+Given the project's current situation, the current workflow expects that releases will
+be launched often, containing small increments, hence the tight integration with Pull Requests. In order to
+issue a release you will have to:
+
+* Open a Pull Request with the code changes. The Pull Request should update the file `version.txt`
+with the new version, using [Semver](https://semver.org/).
+
+* Create a Git tag with the current version when the Pull Request is merged into the "master" branch.
+
+* That's it :tada: The corresponding Docker images were generated automatically when the Pull Request was merged :rocket:
+
+But sometimes you may want to issue a bigger release, consisting of many Pull Requests. When that happens,
+the recommended workflow is to create a release branch and point the associated Pull Requests to it, keeping
+the small increments approach and making the code-reviews easier. When the release branch is ready, it
+can be merged into master and the release will be issued by following the default workflow.
+
+Suggestions about the CI/CD pipeline are welcome, and we use Github Issues to discuss them.
+
+**Note** The pipeline checks for repeated releases to avoid overwriting the existing Docker
+images with incorrect ones. A tradeoff of this decision is that each Pull Request merged into "master"
+must issue a new request, including the ones that do not change the code.
+
 ## Idea: Permission dependency
 
 A nice-to-have feature would be to declare permission dependencies. It should be expected that **Maestro::RL::EditScheduler::\*** implies following **Maestro::RL::ReadScheduler::\***
 
 One way to do this is to have clients declare them over a Will.IAM endpoint and use this custom entity, PermissionDependency, when creating / deleting user|role permissions.
+
+## TODO:
+
+### major
+
+* [ ] Reorganize pkg errors, fill errors/codes.go to keep track of all codes
+* [ ] Revisit errors to return 4xx where it makes sense. (Most places return 500)
+
+### minor
+
+* [ ] Replace %s + err.Error() by %v + err
+* [ ] Replace t.Errorf + return by t.Fatalf where it should stop early
+* [ ] Use api.ErrorResponse in other places
+* [ ] Use api.ListResponse in other places
