@@ -6,19 +6,15 @@ set -eu.
 # Given that the "master" branch is protected, the only way to trigger a build from the "master" branch is when a PR
 # is merged into it. This way, we avoid storing images from non-stable branches.
 LAST_COMMIT_SHA=$(git rev-parse --short HEAD)
-DOCKER_HUB_REPO="https://registry.hub.docker.com/v1/repositories/tfgco/will-iam/tags"
 VERSION=$(cat version.txt)
-VERSION_REGEX="^$VERSION$"
-TAG=$(curl "$DOCKER_HUB_REPO" | \
-    sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | \
-    tr '}' '\n'  | \
-    awk -F: '{print $3}' | \
-    grep "$VERSION_REGEX"
-)
 
-if [ "$TAG" = "$VERSION" ]; then
-  echo "An image with this version already exists in Docker Hub. Please update your version.go file and try again."
-  exit 1
+function docker_tag_exists() {
+    curl --silent -f -lSL "https://index.docker.io/v1/repositories/$1/tags/$2" > /dev/null
+}
+
+if docker_tag_exists tfgco/will-iam "$VERSION"; then
+    echo "An image with the version $VERSION already exists in Docker Hub. Please update your version.txt file and try again."
+    exit 1
 fi
 
 docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
