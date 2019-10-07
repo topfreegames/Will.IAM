@@ -16,12 +16,8 @@ jobs:
       - make ci/install
       after_success:
       - goveralls -coverprofile=coverage.out -service=travis-ci
-      name: "Unit tests"
       script:
-      - make ci/test/unit
-    - script:
-      - make ci/test/integration
-      name: "Integration tests"
+      - make ci/test
     - stage: deploy
       if: branch = master AND type = push
       services: docker

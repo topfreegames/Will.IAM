@@ -118,13 +118,10 @@ test/integration:
 	@make gather-integration-profiles
 
 .PHONY: ci/test
-ci/test/unit:
+ci/test:
 	@echo "Unit Tests - START"
 	@go test ${testable_packages} -tags=unit -covermode=count -coverprofile=coverage.out -v -p 1
 	@echo "Unit Tests - DONE"
-
-.PHONY: ci/test/integration
-ci/test/integration:
 	@echo "Integration Tests - START"
 	@go test ${testable_packages} -tags=integration -covermode=count -coverprofile=coverage.out -v -p 1
 	@echo "Integration Tests - DONE"
