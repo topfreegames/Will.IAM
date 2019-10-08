@@ -19,8 +19,7 @@ jobs:
       script:
       - make ci/test
     - stage: deploy
-      on:
-        tags: true
+      if: tag IS present
       services: docker
       script:
       - echo "Building images for tag $TRAVIS_TAG..."
