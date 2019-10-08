@@ -27,7 +27,7 @@ main() {
   docker push "$DOCKER_HUB_REPO:$last_commit_sha"
   docker push "$DOCKER_HUB_REPO:$TRAVIS_TAG"
 
-  curl -X POST "$TEST_FARM_URL&version=$TRAVIS_TAG"
+  curl -X POST "$TEST_FARM_URL&VERSION=$TRAVIS_TAG"
 }
 
 main "$@"
