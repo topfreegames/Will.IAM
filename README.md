@@ -93,33 +93,33 @@ When an unauthorized request is made, a response with `{ "permission": {string},
 Will.IAM has a very simple CI/CD pipeline in place to help us guarantee that the code has a good quality and to avoid
 broken releases. Currently we use TravisCI to automate the execution of tests, code quality tools and generation and
 publishing of images in our 
-[Docker Hub repository](https://hub.docker.com/r/tfgco/will-iam). The Pipeline works as follows:
+[Docker Hub repository](https://hub.docker.com/r/tfgco/will-iam).
 
-![](ci_pipeline.jpg)
+## Issuing new releases
 
-### Issuing new releases
+Versioning happens through Git tagging. Every time a tag is created in the "master" branch, a new release will be
+issued, with the associated Docker images pushed to Docker Hub. Each release creates one Docker image with two different
+tags:
 
-Versioning happens through the `version.txt` file, which stores the project's current version.
-Given the project's current situation, the current workflow expects that releases will
-be launched often, containing small increments, hence the tight integration with Pull Requests. In order to
-issue a release you will have to:
+* will-iam:<last commit SHA\>
+* will-iam:<X.X.X\>
 
-* Open a Pull Request with the code changes. The Pull Request should update the file `version.txt`
-with the new version, using [Semver](https://semver.org/).
+The current workflow to issue a new release is:
 
-* Create a Git tag with the current version when the Pull Request is merged into the "master" branch.
+* Open a Pull Request with the code changes.
 
-* That's it :tada: The corresponding Docker images were generated automatically when the Pull Request was merged :rocket:
+* After the Pull Request is merged, create a Git tag with the current version and push it to Github. We use
+[Semver](https://semver.org/) as the versioning schema.
+
+* That's it :tada: The corresponding Docker images will be generated automatically :rocket:
 
 But sometimes you may want to issue a bigger release, consisting of many Pull Requests. When that happens,
-the recommended workflow is to create a release branch and point the associated Pull Requests to it, keeping
-the small increments approach and making the code reviews easier. When the release branch is ready, it
-can be merged into master and the release will be issued by following the default workflow.
+the recommended workflow is to open Pull Requests with small code increments. As the Pull Requests are merged and the
+release is ready to be published, send the Git tag to Github and the release will be published. Note that during this
+time the "master" branch may contain breaking changes in the API, so its recommended to proceed with caution when using
+images build from "master".
 
 Suggestions about the CI/CD pipeline are welcome, and we use Github Issues to discuss them.
-
-**Note.** The pipeline checks for repeated releases to avoid overwriting existing Docker. A tradeoff of this decision is
-that each Pull Request merged into "master" must issue a new version, including the ones that do not change the code.
 
 ## Idea: Permission dependency
 

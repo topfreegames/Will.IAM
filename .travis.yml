@@ -19,7 +19,8 @@ jobs:
       script:
       - make ci/test
     - stage: deploy
-      if: branch = master AND type = push
+      on:
+        tags: true
       services: docker
       script:
       - push_to_docker.sh
