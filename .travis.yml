@@ -22,5 +22,4 @@ jobs:
       if: tag IS present
       services: docker
       script:
-      - echo "Building images for tag $TRAVIS_TAG..."
-      - push_to_docker.sh
+      - sh ./push_to_docker.sh
