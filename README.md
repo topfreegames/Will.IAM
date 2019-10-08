@@ -13,21 +13,8 @@ Will.IAM solves identity and access management.
 * SSO - Single Sign-On
   * SSO browser handler should save/get to/from localStorage and redirect to requester
 
-  Client redirects to server (browser), server has token in localStorage, redirects back with stored token. No button clicks :) Client should be careful to not log token to other parties (e.g google analytics)
-
-## TODO:
-
-### major
-
-* [ ] Reorganize pkg errors, fill errors/codes.go to keep track of all codes
-* [ ] Revisit errors to return 4xx where it makes sense. (Most places return 500)
-
-### minor
-
-* [ ] Replace %s + err.Error() by %v + err
-* [ ] Replace t.Errorf + return by t.Fatalf where it should stop early
-* [ ] Use api.ErrorResponse in other places
-* [ ] Use api.ListResponse in other places
+  Client redirects to server (browser), server has token in localStorage, redirects back with stored token. No
+  buttonclicks :) Client should be careful to not log token to other parties (e.g google analytics)
 
 ## About RBAC use cases and implementation
 
@@ -37,7 +24,8 @@ Using Maestro, https://github.com/topfreegames/maestro, as an example:
 
 In order to get a list of schedulers, users must have ListSchedulers permission.
 
-Permissions are written in a specific format **{Service}::{OwnershipLevel}::{Action}::{Resource::Hierarchy}**. So, ListSchedulers could be had in a diversity of ways:
+Permissions are written in a specific format **{Service}::{OwnershipLevel}::{Action}::{Resource::Hierarchy}**. So,
+ListSchedulers could be had in a diversity of ways:
 
 Maestro::RO::ListSchedulers::*
 
@@ -45,7 +33,8 @@ Maestro::RL::ListSchedulers::NA::Sniper3D::*
 
 Maestro::RL::ListSchedulers::NA::Sniper3D::sniper3d-game
 
-You'll know more about Will.IAM permissions later. If someone has **Maestro::RL::ListSchedulers::NA::Sniper3D::\***, then Maestro will only respond schedulers under NA::Sniper3D's domain.
+You'll know more about Will.IAM permissions later. If someone has **Maestro::RL::ListSchedulers::NA::Sniper3D::\***,
+then Maestro will only respond schedulers under NA::Sniper3D's domain.
 
 ## Permissions
 
@@ -68,12 +57,14 @@ A verb defined by Will.IAM clients.
 
 ### Resource Hierarchy
 
-Can be complete or open, in the sense that an open hierarchy will probably lead to access to multiple items under a domain.
+Can be complete or open, in the sense that an open hierarchy will probably lead to access to multiple items under a
+domain.
 
 
 ## Client side - /am route
 
-Will.IAM clients should expose a **GET /am** route that will help list actions and resource hierarchies to which the requester has some level os access.
+Will.IAM clients should expose a **GET /am** route that will help list actions and resource hierarchies to which the
+requester has some level os access.
 
 E.g:
 
@@ -85,18 +76,68 @@ E.g:
 
 **GET /am?prefix=ListSchedulers::NA::Sniper3D** -> all schedulers in NA::Sniper3D
 
-To a requester with full access over the client, this means it will list all possible permissions and resources possible to be granted OwnershipLevel::Action to another party.
+To a requester with full access over the client, this means it will list all possible permissions and resources possible
+to be granted OwnershipLevel::Action to another party.
 
 ### Complete permissions
 
-When calling GET /am?prefix={complete-permission-here} your server should respond with the full permission and alias, as it did when autocompleting. This helps Will.IAM request a trustful "alias" to fill permission requests.
+When calling GET /am?prefix={complete-permission-here} your server should respond with the full permission and alias,
+as it did when autocompleting. This helps Will.IAM request a trustful "alias" to fill permission requests.
 
 ### Handling 403
 
 When an unauthorized request is made, a response with `{ "permission": {string}, "alias": {string} }` is expected.
 
+## The CI/CD pipeline
+
+Will.IAM has a very simple CI/CD pipeline in place to help us guarantee that the code has a good quality and to avoid
+broken releases. Currently we use TravisCI to automate the execution of tests, code quality tools and generation and
+publishing of images in our [Docker Hub repository](https://hub.docker.com/r/tfgco/will-iam).
+
+## Issuing new releases
+
+Versioning happens through Git tagging. Every time a tag is created in the "master" branch, a new release will be
+issued, with the associated Docker images pushed to Docker Hub. Each release creates one Docker image with two
+different tags:
+
+* will-iam:<last commit SHA\>
+* will-iam:<X.X.X\>
+
+The current workflow to issue a new release is:
+
+* Open a Pull Request with the code changes.
+
+* After the Pull Request is merged, create a Git tag with the current version and push it to Github. We use
+[Semver](https://semver.org/) as the versioning schema.
+
+* That's it :tada: The corresponding Docker images will be generated automatically :rocket:
+
+But sometimes you may want to issue a bigger release, consisting of many Pull Requests. When that happens,
+the recommended workflow is to open Pull Requests with small code increments. As the Pull Requests are merged and the
+release is ready to be published, send the Git tag to Github and the release will be published. Note that during this
+time the "master" branch may contain breaking changes in the API, so its recommended to proceed with caution when
+using images build from "master".
+
+Suggestions about the CI/CD pipeline are welcome, and we use Github Issues to discuss them.
+
 ## Idea: Permission dependency
 
-A nice-to-have feature would be to declare permission dependencies. It should be expected that **Maestro::RL::EditScheduler::\*** implies following **Maestro::RL::ReadScheduler::\***
+A nice-to-have feature would be to declare permission dependencies. It should be expected that
+**Maestro::RL::EditScheduler::\*** implies following **Maestro::RL::ReadScheduler::\***
 
-One way to do this is to have clients declare them over a Will.IAM endpoint and use this custom entity, PermissionDependency, when creating / deleting user|role permissions.
+One way to do this is to have clients declare them over a Will.IAM endpoint and use this custom entity,
+PermissionDependency, when creating / deleting user|role permissions.
+
+## TODO:
+
+### major
+
+* [ ] Reorganize pkg errors, fill errors/codes.go to keep track of all codes
+* [ ] Revisit errors to return 4xx where it makes sense. (Most places return 500)
+
+### minor
+
+* [ ] Replace %s + err.Error() by %v + err
+* [ ] Replace t.Errorf + return by t.Fatalf where it should stop early
+* [ ] Use api.ErrorResponse in other places
+* [ ] Use api.ListResponse in other places
