@@ -23,4 +23,5 @@ jobs:
         tags: true
       services: docker
       script:
+      - echo "Building images for tag $TRAVIS_TAG..."
       - push_to_docker.sh
