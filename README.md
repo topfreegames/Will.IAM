@@ -13,7 +13,7 @@ Will.IAM solves identity and access management.
 * SSO - Single Sign-On
   * SSO browser handler should save/get to/from localStorage and redirect to requester
 
-  Client redirects to server (browser), server has token in localStorage, redirects back with stored token. No button clicks :) Client should be careful to not log token to other parties (e.g google analytics)
+  Client redirects to server (browser), server has token in localStorage, redirects back with stored token. No buttonclicks :) Client should be careful to not log token to other parties (e.g google analytics)
 
 ## About RBAC use cases and implementation
 
@@ -81,9 +81,9 @@ When calling GET /am?prefix={complete-permission-here} your server should respon
 
 When an unauthorized request is made, a response with `{ "permission": {string}, "alias": {string} }` is expected.
 
-### The CI/CD pipeline
+## The CI/CD pipeline
 
-Will.IAM has a very simple CI/CD pipeline in place to help us guarantee that the code have a good quality and avoid broken releases.
+Will.IAM has a very simple CI/CD pipeline in place to help us guarantee that the code has a good quality and to avoid broken releases.
 Currently we use TravisCI to automate the execution of tests, code quality tools and generation and publishing of images in our 
 [Docker Hub repository](https://hub.docker.com/r/tfgco/will-iam). The Pipeline works as follows:
 
@@ -105,14 +105,13 @@ with the new version, using [Semver](https://semver.org/).
 
 But sometimes you may want to issue a bigger release, consisting of many Pull Requests. When that happens,
 the recommended workflow is to create a release branch and point the associated Pull Requests to it, keeping
-the small increments approach and making the code-reviews easier. When the release branch is ready, it
+the small increments approach and making the code reviews easier. When the release branch is ready, it
 can be merged into master and the release will be issued by following the default workflow.
 
 Suggestions about the CI/CD pipeline are welcome, and we use Github Issues to discuss them.
 
-**Note** The pipeline checks for repeated releases to avoid overwriting the existing Docker
-images with incorrect ones. A tradeoff of this decision is that each Pull Request merged into "master"
-must issue a new request, including the ones that do not change the code.
+**Note.** The pipeline checks for repeated releases to avoid overwriting existing Docker. A tradeoff of this decision is
+that each Pull Request merged into "master" must issue a new version, including the ones that do not change the code.
 
 ## Idea: Permission dependency
 

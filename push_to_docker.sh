@@ -5,7 +5,7 @@ set -euo pipefail
 # The image build step occurs only when a build is triggered by a commit being merged into the "master" branch.
 # Given that the "master" branch is protected, the only way to trigger a build from the "master" branch is when a PR
 # is merged into it. This way, we avoid storing images from non-stable branches.
-DOCKER_HUB_REPO='tfgco/will-iam'
+readonly DOCKER_HUB_REPO='tfgco/will-iam'
 
 docker_tag_exists() {
     local repo="$1"
