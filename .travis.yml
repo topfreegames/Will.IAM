@@ -22,4 +22,4 @@ jobs:
       if: tag IS present
       services: docker
       script:
-      - sh ./push_to_docker.sh
+      - ./push_to_docker.sh
