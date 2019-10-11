@@ -7,7 +7,7 @@ method with the owners of this repository before making a change.
 
 1. Ensure that your code is tested and follows the project's coding style.
 2. Ensure that your Pull Request follows the template defined in `.github/pull_request_template.md`.
-3. You may merge the Pull Request in once you have the sign-off of at least another developer, or if you  do not have
+3. You may merge the Pull Request in once you have the sign-off of at least another developer, or if you do not have
    permission to do that, you may request the reviewer to merge it for you.
 
 ## Issuing new releases
