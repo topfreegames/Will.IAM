@@ -1,7 +1,8 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue, email, or any other
-method with the owners of this repository before making a change.
+When contributing to this repository, it's recommended to first discuss the change you wish to make via issue, email, or any other
+method with the owners of this repository before making a change. However, if the change is simple enough, this process
+may be skipped and a PR may be opened directly.
 
 ## Pull Request Process
 
