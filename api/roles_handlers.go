@@ -245,3 +245,28 @@ func rolesGetHandler(
 		WriteBytes(w, 200, bts)
 	}
 }
+
+
+func rolesGePermissions(
+	rsUC usecases.Roles,
+) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		l := middleware.GetLogger(r.Context())
+		id := mux.Vars(r)["id"]
+		rsUCc := rsUC.WithContext(r.Context())
+		permissions, err := rsUCc.GetPermissions(id)
+		if err != nil {
+			l.WithError(err).Error("rolesViewHandler rsUC.Get")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		bts, err := json.Marshal(permissions)
+		if err != nil {
+			l.Error(err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		WriteBytes(w, 200, bts)
+	}
+}
+
