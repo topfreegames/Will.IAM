@@ -22,10 +22,11 @@ const userEndpoint = "https://www.googleapis.com/oauth2/v2/userinfo"
 // GoogleConfig are the basic required informations to use Google
 // as oauth2 provider
 type GoogleConfig struct {
-	ClientID      string
-	ClientSecret  string
-	RedirectURL   string
-	HostedDomains []string
+	ClientID          string
+	ClientSecret      string
+	RedirectURL       string
+	CheckHostedDomain bool
+	HostedDomains     []string
 }
 
 var googleConfig GoogleConfig
@@ -196,7 +197,7 @@ func (g *Google) getUserInfo(accessToken string) (*userInfo, error) {
 }
 
 func (g *Google) checkHostedDomain(hd string) bool {
-	if g.config.HostedDomains == nil || len(g.config.HostedDomains) == 0 {
+	if !g.config.CheckHostedDomain || g.config.HostedDomains == nil || len(g.config.HostedDomains) == 0 {
 		return true
 	}
 	for _, allowed := range g.config.HostedDomains {
