@@ -11,3 +11,5 @@ services:
       - "postgres"
       - "-c"
       - "max_connections=9999"
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust

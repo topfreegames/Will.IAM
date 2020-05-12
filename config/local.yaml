@@ -8,6 +8,7 @@ oauth2:
     clientId: dummy
     clientSecret: dummy
     redirectUrl: dummy
+    checkHostedDomain: true
     hostedDomains:
       - domain1
       - domain2
