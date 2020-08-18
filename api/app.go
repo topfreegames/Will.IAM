@@ -65,7 +65,7 @@ func (a *App) configureApp() error {
 		return err
 	}
 
-	a.configureGoogleOAuth2Provider()
+	a.configureOAuth2Provider()
 	a.configureServer()
 
 	return nil
@@ -107,16 +107,11 @@ func (a *App) configureJaeger() error {
 	return err
 }
 
-func (a *App) configureGoogleOAuth2Provider() {
+func (a *App) configureOAuth2Provider() {
 	repo := repositories.New(a.storage)
-	google := oauth2.NewGoogle(oauth2.GoogleConfig{
-		ClientID:          a.config.GetString("oauth2.google.clientId"),
-		ClientSecret:      a.config.GetString("oauth2.google.clientSecret"),
-		RedirectURL:       a.config.GetString("oauth2.google.redirectUrl"),
-		CheckHostedDomain: a.config.GetBool("oauth2.google.checkHostedDomain"),
-		HostedDomains:     a.config.GetStringSlice("oauth2.google.hostedDomains"),
-	}, repo)
-	a.oauth2Provider = google
+	provider := oauth2.GetOAuthProvider(a.config, repo)
+
+	a.SetOAuth2Provider(provider)
 }
 
 // SetOAuth2Provider sets a provider in App

@@ -32,7 +32,11 @@ docker/build:
 
 .PHONY: run
 run:
-	@reflex -c reflex.conf -- sh -c ./bin/Will.IAM start-api
+	make build && ./bin/Will.IAM start-api --host=localhost -v3
+
+.PHONY: run-dev
+run-dev:
+	@reflex -c reflex.conf -- sh -c make run
 
 .PHONY: test
 test: db/setup-test test/unit test/integration db/stop-test

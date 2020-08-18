@@ -4,6 +4,7 @@ jaeger:
   samplingProbability: 1
   serviceName: Will.IAM
 oauth2:
+  provider: mock
   google:
     clientId: dummy
     clientSecret: dummy

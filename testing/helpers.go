@@ -157,7 +157,7 @@ func CreateServiceAccountWithPermissions(t *testing.T, name string, email string
 	return rootSA
 }
 
-// CleanupPG clears the databse data between tests
+// CleanupPG clears the database data between tests
 func CleanupPG(t *testing.T) {
 	t.Helper()
 	storage := GetStorage(t)
