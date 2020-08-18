@@ -1,5 +1,10 @@
 version: '2'
 services:
+  oauth2-server:
+    image: node:14.8
+    ports:
+      - 9000:9000
+    command: bash -c "npm install -g oauth2-mock-server && oauth2-mock-server -p 9000"
   postgres:
     image: postgres:9.6
     ports:

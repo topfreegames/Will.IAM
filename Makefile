@@ -61,6 +61,12 @@ download-mod:
 compose-down:
 	@docker-compose down
 
+.PHONY: compose-up
+compose-up:
+	@mkdir -p docker_data && docker-compose up -d
+	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
+	@sleep 2
+
 .PHONY: db/setup
 db/setup: db/up db/create-user db/create db/migrate
 
