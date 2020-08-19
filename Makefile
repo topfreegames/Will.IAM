@@ -34,8 +34,8 @@ docker/build:
 run:
 	make build && ./bin/Will.IAM start-api --host=localhost -v3
 
-.PHONY: run-dev
-run-dev:
+.PHONY: dev-run
+dev-run:
 	@reflex -c reflex.conf -- sh -c make run
 
 .PHONY: test

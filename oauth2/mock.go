@@ -2,7 +2,6 @@ package oauth2
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/topfreegames/Will.IAM/models"
 	"github.com/topfreegames/Will.IAM/repositories"
@@ -15,16 +14,13 @@ type ProviderBlankMock struct {
 }
 
 // NewProviderBlankMock ctor
-func NewProviderBlankMock(repo *repositories.All) *ProviderBlankMock {
-	return &ProviderBlankMock{ repo: repo }
+func NewProviderBlankMock() *ProviderBlankMock {
+	return &ProviderBlankMock{}
 }
 
 // BuildAuthURL dummy
 func (p *ProviderBlankMock) BuildAuthURL(any string) string {
-	endpoint := "http://localhost:9000/authorize"
-	redirectUri := "http://localhost:4040/sso/auth/done"
-
-	return fmt.Sprintf("%s?response_type=code&redirect_uri=%s", endpoint, redirectUri)
+	return "any"
 }
 
 // ExchangeCode dummy
@@ -37,9 +33,12 @@ func (p *ProviderBlankMock) ExchangeCode(any string) (*models.AuthResult, error)
 
 // Authenticate dummy
 func (p *ProviderBlankMock) Authenticate(accessToken string) (*models.AuthResult, error) {
+	tokensRepo := p.repo.Tokens
+	token, _ := tokensRepo.Get(accessToken)
+
 	return &models.AuthResult{
-		AccessToken: accessToken,
-		Email:       "any",
+		AccessToken: token.AccessToken,
+		Email:       token.Email,
 	}, nil
 }
 

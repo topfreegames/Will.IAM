@@ -20,8 +20,11 @@ type Provider interface {
 func GetOAuthProvider(config *viper.Viper, repo *repositories.All) Provider {
 	providerType := config.GetString("oauth2.provider")
 
-	if providerType == "mock" {
-		return NewProviderBlankMock(repo)
+	if providerType == "dev" {
+		return NewDevOAuth2Provider(DevOAuth2ProviderConfig{
+			RedirectURL:      config.GetString("oauth2.dev.redirectUrl"),
+			AuthorizationURL: config.GetString("oauth2.dev.authorizationUrl"),
+		})
 	}
 
 	return NewGoogle(GoogleConfig{
