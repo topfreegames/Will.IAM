@@ -128,6 +128,15 @@ A nice-to-have feature would be to declare permission dependencies. It should be
 One way to do this is to have clients declare them over a Will.IAM endpoint and use this custom entity,
 PermissionDependency, when creating / deleting user|role permissions.
 
+## Developing Will.IAM
+
+To start to develop in Will.IAM codebase be sure that you have `go 1.13` and `Docker` installed.
+
+After that, on root folder, do the following steps:
+1. execute `make db/setup` to setup the service database;
+2. start the auxiliary services using `make compose-up` to start them;
+3. run `make dev-run` to start Will.IAM in development mode.
+
 ## TODO:
 
 ### major
