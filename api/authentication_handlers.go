@@ -104,6 +104,7 @@ func authenticationValidHandler(
 		authResult, err := sasUC.WithContext(r.Context()).
 			AuthenticateAccessToken(qs["accessToken"][0])
 		referer := qs["referer"][0]
+
 		if err != nil {
 			l.WithError(err).Error("authenticationValidHandler AuthenticateAccessToken failed")
 			v := url.Values{}
@@ -120,6 +121,7 @@ func authenticationValidHandler(
 		if strings.Contains(referer, "?") {
 			sep = "&"
 		}
+
 		http.Redirect(
 			w, r, fmt.Sprintf("%s%s%s", referer, sep, v.Encode()),
 			http.StatusSeeOther,
