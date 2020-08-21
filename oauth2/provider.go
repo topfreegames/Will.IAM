@@ -16,7 +16,7 @@ type Provider interface {
 	WithContext(context.Context) Provider
 }
 
-// Given a provider selection on config, returns its instance
+// GetOAuthProvider returns an instance of a provider given a type selection on config
 func GetOAuthProvider(config *viper.Viper, repo *repositories.All) Provider {
 	providerType := config.GetString("oauth2.provider")
 
@@ -24,7 +24,8 @@ func GetOAuthProvider(config *viper.Viper, repo *repositories.All) Provider {
 		return NewDevOAuth2Provider(DevOAuth2ProviderConfig{
 			RedirectURL:      config.GetString("oauth2.dev.redirectUrl"),
 			AuthorizationURL: config.GetString("oauth2.dev.authorizationUrl"),
-		})
+			TokenURL:         config.GetString("oauth2.dev.tokenUrl"),
+		}, repo)
 	}
 
 	return NewGoogle(GoogleConfig{
