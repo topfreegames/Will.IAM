@@ -64,7 +64,7 @@ compose-down:
 # start all service containers (Database and OAuth2 Server)
 .PHONY: compose-up
 compose-up:
-	@mkdir -p docker_data && docker-compose up -d
+	@mkdir -p docker_data && docker-compose up -d $(container)
 	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
 	@sleep 2
 
@@ -77,9 +77,7 @@ db/setup-test: db/up db/create-user db/create-test db/migrate-test
 # start only database containers
 .PHONY: db/up
 db/up:
-	@mkdir -p docker_data && docker-compose up -d postgres
-	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
-	@sleep 2
+	make compose-up container=postgres
 
 .PHONY: db/create-user
 db/create-user:
