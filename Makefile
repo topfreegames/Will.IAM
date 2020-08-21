@@ -31,8 +31,8 @@ docker/build:
 	@docker build -t $(project) .
 
 .PHONY: run
-run:
-	make build && ./bin/Will.IAM start-api --host=localhost -v3
+run: build
+	./bin/Will.IAM start-api --host=localhost -v3
 
 .PHONY: dev-run
 dev-run:
@@ -61,6 +61,7 @@ download-mod:
 compose-down:
 	@docker-compose down
 
+# start all service containers (Database and OAuth2 Server)
 .PHONY: compose-up
 compose-up:
 	@mkdir -p docker_data && docker-compose up -d
@@ -73,6 +74,7 @@ db/setup: db/up db/create-user db/create db/migrate
 .PHONY: db/setup-test
 db/setup-test: db/up db/create-user db/create-test db/migrate-test
 
+# start only database containers
 .PHONY: db/up
 db/up:
 	@mkdir -p docker_data && docker-compose up -d postgres

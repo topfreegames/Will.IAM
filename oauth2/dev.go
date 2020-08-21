@@ -113,11 +113,14 @@ func (p *DevOAuth2Provider) getToken(code string) (*models.Token, error) {
 
 	oauthToken := &OAuthToken{}
 	err = json.Unmarshal(body, oauthToken)
+	if err != nil {
+		return nil, err
+	}
 
 	accessToken := oauthToken.AccessToken
 
-	// TODO: Will.IAM is not able to support JWT tokens due a restriction in model
-	// of 300 characters in accessToken
+	// TODO: Will.IAM is not able to support JWT tokens due a restriction of 300 characters
+	// in accessToken field when saving a Token on database
 	if len(accessToken) > 300 {
 		accessToken = accessToken[0:300]
 	}
