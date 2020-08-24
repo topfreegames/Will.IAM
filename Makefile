@@ -69,15 +69,15 @@ compose-stop:
 
 # start all containers
 .PHONY: compose-up
-compose-up:
-	@mkdir -p docker_data && docker-compose up -d
+compose-up: dependencies/up
+	@docker-compose up william
 
 # start only the dependency containers
 .PHONY: dependencies/up
 dependencies/up:
 	@mkdir -p docker_data && docker-compose up -d postgres oauth2-server
-	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
-	@until curl -sL "http://localhost:9000/.well-known/openid-configuration" -o /dev/null; do echo 'Waiting OAuth2 server...' && sleep 1; done
+	@until docker inspect --format "{{json .State.Health.Status }}" Will.IAM_postgres_1 | grep -q "healthy"; do echo 'Waiting Postgres...' && sleep 1; done
+	@until docker inspect --format "{{json .State.Health.Status }}" Will.IAM_oauth2_server_1 | grep -q "healthy"; do echo 'Waiting OAuth2 server...' && sleep 1; done
 	@sleep 2
 
 .PHONY: db/setup
@@ -90,7 +90,7 @@ db/setup-test: db/up db/create-user db/create-test db/migrate-test
 .PHONY: db/up
 db/up:
 	@mkdir -p docker_data && docker-compose up -d postgres
-	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
+	@until docker inspect --format "{{json .State.Health.Status }}" Will.IAM_postgres_1 | grep -q "healthy"; do echo 'Waiting Postgres...' && sleep 1; done
 	@sleep 2
 
 .PHONY: db/create-user
