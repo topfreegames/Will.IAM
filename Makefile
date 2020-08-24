@@ -57,15 +57,27 @@ endif
 download-mod:
 	@go mod download
 
+# stop all containers, removing container data
 .PHONY: compose-down
 compose-down:
 	@docker-compose down
 
-# start all service containers (Database and OAuth2 Server)
+# stop all containers, preserving container data
+.PHONY: compose-stop
+compose-stop:
+	@docker-compose stop
+
+# start all containers
 .PHONY: compose-up
 compose-up:
-	@mkdir -p docker_data && docker-compose up -d $(container)
+	@mkdir -p docker_data && docker-compose up -d
+
+# start only the dependency containers
+.PHONY: dependencies/up
+dependencies/up:
+	@mkdir -p docker_data && docker-compose up -d postgres oauth2-server
 	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
+	@until curl -sL "http://localhost:9000/.well-known/openid-configuration" -o /dev/null; do echo 'Waiting OAuth2 server...' && sleep 1; done
 	@sleep 2
 
 .PHONY: db/setup
@@ -74,10 +86,12 @@ db/setup: db/up db/create-user db/create db/migrate
 .PHONY: db/setup-test
 db/setup-test: db/up db/create-user db/create-test db/migrate-test
 
-# start only database containers
+# start only the database container
 .PHONY: db/up
 db/up:
-	make compose-up container=postgres
+	@mkdir -p docker_data && docker-compose up -d postgres
+	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
+	@sleep 2
 
 .PHONY: db/create-user
 db/create-user:

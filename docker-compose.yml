@@ -1,5 +1,20 @@
 version: '2'
 services:
+  william:
+    image: golang:1.13-alpine
+    ports:
+      - 4040:4040
+    working_dir: /Will.IAM
+    volumes:
+      - ./:/Will.IAM
+    depends_on:
+      - oauth2-server
+      - postgres
+    environment:
+      - WILLIAM_EXTENSIONS_PG_HOST=postgres
+      - WILLIAM_EXTENSIONS_PG_PORT=5432
+    container_name: Will.IAM_app_1
+    command: "sh -c 'chmod +x ./wait-for-it.sh && ./wait-for-it.sh postgres oauth2-server:9000 -- go mod download && make run'"
   oauth2-server:
     image: node:14.8
     ports:
