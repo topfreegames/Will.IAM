@@ -132,7 +132,7 @@ PermissionDependency, when creating / deleting user|role permissions.
 
 To start to develop in Will.IAM codebase be sure that you have `go 1.13` and `Docker` installed.
 
-After that, on root folder, do the following steps:
+After that, on the root folder, do the following steps:
 1. Execute `make db/setup` to setup the service database;
 2. Start the auxiliary services using `make compose-up` to start them;
 3. Run `make dev-run` to start Will.IAM in development mode.
