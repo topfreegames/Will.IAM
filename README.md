@@ -134,8 +134,9 @@ To start to develop in Will.IAM codebase be sure that you have `go 1.13` and `Do
 
 After that, on the root folder, do the following steps:
 1. Execute `make db/setup` to setup the service database;
-2. Start the auxiliary services using `make compose-up` to start them;
-3. Run `make dev-run` to start Will.IAM in development mode.
+2. Start the auxiliary services and Will.IAM using `make compose-up`.
+
+If you want to run Will.IAM locally (for example to use code reload with reflex or use a debugger), you can use `make dependencies/up` to start the dependency containers and later run `make dev-run` to start Will.IAM in development mode.
 
 ## TODO:
 
