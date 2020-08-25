@@ -1,4 +1,4 @@
-version: '3.4'
+version: '2.1'
 services:
   william:
     image: golang:1.13-alpine
@@ -8,8 +8,10 @@ services:
     volumes:
       - ./:/Will.IAM
     depends_on:
-      - oauth2-server
-      - postgres
+      oauth2-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       - WILLIAM_EXTENSIONS_PG_HOST=postgres
       - WILLIAM_EXTENSIONS_PG_PORT=5432
@@ -40,7 +42,7 @@ services:
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
     healthcheck:
-      test: ["CMD", "pg_isready"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 1s
       timeout: 10s
       retries: 5

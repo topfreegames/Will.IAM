@@ -69,7 +69,7 @@ compose-stop:
 
 # start all containers
 .PHONY: compose-up
-compose-up: dependencies/up
+compose-up:
 	@docker-compose up william
 
 # start only the dependency containers
