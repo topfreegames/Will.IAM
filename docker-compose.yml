@@ -1,5 +1,33 @@
-version: '2'
+version: '2.1'
 services:
+  william:
+    image: golang:1.13-alpine
+    ports:
+      - 4040:4040
+    working_dir: /Will.IAM
+    volumes:
+      - ./:/Will.IAM
+    depends_on:
+      oauth2-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - WILLIAM_EXTENSIONS_PG_HOST=postgres
+      - WILLIAM_EXTENSIONS_PG_PORT=5432
+    container_name: Will.IAM_app_1
+    command: "sh -c 'apk add make && go mod download && make run'"
+  oauth2-server:
+    image: node:14.8
+    ports:
+      - 9000:9000
+    container_name: Will.IAM_oauth2_server_1
+    command: sh -c "npm install -g oauth2-mock-server && oauth2-mock-server -p 9000"
+    healthcheck:
+      test: ["CMD", "curl", "http://localhost:9000/.well-known/openid-configuration"]
+      interval: 1s
+      timeout: 10s
+      retries: 5
   postgres:
     image: postgres:9.6
     ports:
@@ -13,3 +41,9 @@ services:
       - "max_connections=9999"
     environment:
       - POSTGRES_HOST_AUTH_METHOD=trust
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 1s
+      timeout: 10s
+      retries: 5
+

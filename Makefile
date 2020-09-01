@@ -31,8 +31,12 @@ docker/build:
 	@docker build -t $(project) .
 
 .PHONY: run
-run:
-	@reflex -c reflex.conf -- sh -c ./bin/Will.IAM start-api
+run: build
+	./bin/Will.IAM start-api --host=localhost -v3
+
+.PHONY: dev-run
+dev-run:
+	@reflex -c reflex.conf -- sh -c make run
 
 .PHONY: test
 test: db/setup-test test/unit test/integration db/stop-test
@@ -53,9 +57,28 @@ endif
 download-mod:
 	@go mod download
 
+# stop all containers, removing container data
 .PHONY: compose-down
 compose-down:
 	@docker-compose down
+
+# stop all containers, preserving container data
+.PHONY: compose-stop
+compose-stop:
+	@docker-compose stop
+
+# start all containers
+.PHONY: compose-up
+compose-up:
+	@docker-compose up william
+
+# start only the dependency containers
+.PHONY: dependencies/up
+dependencies/up:
+	@mkdir -p docker_data && docker-compose up -d postgres oauth2-server
+	@until docker inspect --format "{{json .State.Health.Status }}" Will.IAM_postgres_1 | grep -q "healthy"; do echo 'Waiting Postgres...' && sleep 1; done
+	@until docker inspect --format "{{json .State.Health.Status }}" Will.IAM_oauth2_server_1 | grep -q "healthy"; do echo 'Waiting OAuth2 server...' && sleep 1; done
+	@sleep 2
 
 .PHONY: db/setup
 db/setup: db/up db/create-user db/create db/migrate
@@ -63,10 +86,11 @@ db/setup: db/up db/create-user db/create db/migrate
 .PHONY: db/setup-test
 db/setup-test: db/up db/create-user db/create-test db/migrate-test
 
+# start only the database container
 .PHONY: db/up
 db/up:
 	@mkdir -p docker_data && docker-compose up -d postgres
-	@until docker exec $(pg_docker_image) pg_isready; do echo 'Waiting Postgres...' && sleep 1; done
+	@until docker inspect --format "{{json .State.Health.Status }}" Will.IAM_postgres_1 | grep -q "healthy"; do echo 'Waiting Postgres...' && sleep 1; done
 	@sleep 2
 
 .PHONY: db/create-user

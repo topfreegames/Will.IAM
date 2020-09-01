@@ -4,6 +4,11 @@ jaeger:
   samplingProbability: 1
   serviceName: Will.IAM
 oauth2:
+  provider: dev
+  dev:
+    authorizationUrl: http://localhost:9000/authorize
+    tokenUrl: http://localhost:9000/token
+    redirectUrl: http://localhost:4040/sso/auth/done
   google:
     clientId: dummy
     clientSecret: dummy

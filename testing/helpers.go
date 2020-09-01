@@ -33,7 +33,7 @@ func GetConfig(t *testing.T, path ...string) *viper.Viper {
 	return config
 }
 
-// GetLogger gets config for tests
+// GetLogger gets logger for tests
 func GetLogger(t *testing.T) logrus.FieldLogger {
 	t.Helper()
 	return utils.GetLogger("0.0.0.0", 4040, 0, true)
@@ -157,7 +157,7 @@ func CreateServiceAccountWithPermissions(t *testing.T, name string, email string
 	return rootSA
 }
 
-// CleanupPG clears the databse data between tests
+// CleanupPG clears the database data between tests
 func CleanupPG(t *testing.T) {
 	t.Helper()
 	storage := GetStorage(t)
