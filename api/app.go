@@ -290,6 +290,15 @@ func (a *App) GetRouter() *mux.Router {
 	).
 		Methods("GET").Name("rolesListHandler")
 
+
+	r.Handle(
+		"/roles/{id}/permissions",
+		authMiddle(http.HandlerFunc(
+			rolesGePermissions(rsUC),
+		)),
+	).
+		Methods("GET").Name("rolesGePermissions")
+
 	r.Handle(
 		"/roles",
 		authMiddle(hasPermissionMiddle(models.BuildWillIAMPermissionLender(
@@ -309,6 +318,7 @@ func (a *App) GetRouter() *mux.Router {
 		))),
 	).
 		Methods("DELETE").Name("permissionsDeleteHandler")
+
 
 	r.Handle(
 		"/permissions/attribute",
